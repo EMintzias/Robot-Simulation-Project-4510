@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -33,8 +34,10 @@ class Springs:
         self.M2_int = M2
 
     def force_magni(self):
+        pass
 
-    def get_M1_force()
+    def get_M1_force():
+        pass
 
     def Force_vector():
         # ignore structure but the thought on foce vectors is simpl: given 2 self.self.points in space, magnitude is trivial and diretion
@@ -44,6 +47,7 @@ class Springs:
 
 
 class Cube:
+    # TODO Integrate this into a point object structure instead of raw positoin
     def __init__(self, P_o=np.ones(3),
                  floor_size=5):
         self.floor_size = floor_size
@@ -89,37 +93,40 @@ class Cube:
 
         pass
 
-    def Plot(self, plot_Springs=True):
+    def Plot(self,
+             plot_Springs=True,
+             plot_Shadow=True):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
+
+        # Plot Floor
+        floor = [[
+            (0, 0, 0),
+            (self.floor_size, 0, 0),
+            (self.floor_size, self.floor_size, 0),
+            (0, self.floor_size, 0)
+        ]
+        ]
+        # Plot the floor
+        floor = Poly3DCollection(floor, alpha=0.25, facecolors='g')
+        ax.add_collection3d(floor)
 
         # Plot the 8 cube points
         x, y, z = zip(*self.points)
         ax.scatter(x, y, z, c='r', marker='o')
 
-        # Plot the edges
+        # plot the springs
         if plot_Springs:
             for spring in self.springs:
                 sx, sy, sz = zip(*spring)
                 ax.plot(sx, sy, sz, 'y')
 
+        # Plot the edges
         for edge in self.edges:
             ex, ey, ez = zip(*edge)
-            ax.plot(ex, ey, ez, 'b')
-
-        # Define the floor as a rectangle
-        floor = [
-            [
-                (0, 0, 0),
-                (self.floor_size, 0, 0),
-                (self.floor_size, self.floor_size, 0),
-                (0, self.floor_size, 0)
-            ]
-        ]
-
-        # Plot the floor
-        floor = Poly3DCollection(floor, alpha=0.25, facecolors='g')
-        ax.add_collection3d(floor)
+            ax.plot(ex, ey, ez, color='b')
+            if plot_Shadow:
+                ax.plot(ex, ey, color='grey')
 
         # Set axis limits based on the cube and floor size
         ax.set_xlim([0, self.floor_size])
@@ -140,7 +147,7 @@ class Cube:
 
 
 def main():
-    some_cube = Cube(P_o=np.array([1, 2, 3]),
+    some_cube = Cube(P_o=np.array([1, 1, 2]),
                      floor_size=3)
     some_cube.Plot()
     pass

@@ -83,7 +83,7 @@ class Cube:
         self.MU_s = 1  # static friction
         self.MU_k = .8  # kinetic friction
         self.k_vertices_soft = 5000
-        self.k_ground = 1e5
+        self.k_ground = 1e3
         self.omega = 10
 
         # PLOTTING ATTRIBUTES:
@@ -160,7 +160,7 @@ class Cube:
             F_net += F_vect
 
             ''' Debug print
-            
+
             delta  = dist-spring.L_o
             print(spring)
             out = f'Ind: {spring.ind} dist = {round(dist,2)} delta = {round(delta,2)} F_s = {round(F_scalar,2)}'
@@ -191,9 +191,12 @@ class Cube:
         self.T += self.dt
         return None
 
-    def Plot(self, plot_Springs=True, plot_Shadow=True):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+    def Plot(self, plot_Springs=True, plot_Shadow=True, fig=None, ax=None):
+
+        if not fig or not ax:
+            #print('creating new')
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
 
         # Update point positions to plot into this array for easier read
         P = np.array([m.pos for m in self.Masses])
@@ -256,16 +259,29 @@ class Cube:
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
 
-        plt.show()
+        if not fig or not ax:
+            # print('showing')
+            plt.show()
 
         pass
 
-    def Run(self, T_max=1):
+    def Run_Animation(self, T_max=1):
+        '''
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111, projection='3d')
+
+        self.Plot(fig = self.fig, ax = self.ax)
+        plt.pause(2)
+        print(self.fig,self.ax)
+        self.ax.cla()
+        print(self.fig,self.ax)
+
+        '''
         i = 0
         while self.T < T_max:
             if i % 10 == 0:
                 self.Plot()
-                plt.pause(.01)
+                plt.pause(.001)
 
             self.Integrate_step()
 
@@ -276,8 +292,8 @@ def main():
     body = Cube(P_o=np.ones(3),
                 floor_size=5)
 
-    body.Plot()
-    body.Run()
+    # body.Plot()
+    body.Run_Animation()
 
 
 # Plot the cube 1 unit above the 5x5 floor
@@ -285,3 +301,7 @@ if __name__ == "__main__":
     main()
     # test_force()
     # Test()
+# %%
+       for _ in range(100):
+            self.Integrate_step()
+        self.Plot(fig = fig, ax = ax)

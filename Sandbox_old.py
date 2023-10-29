@@ -1,3 +1,7 @@
+from matplotlib.animation import FuncAnimation
+import matplotlib.pyplot as plt
+
+
 def Plot(self, plot_Springs=True, plot_Shadow=True):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -21,55 +25,55 @@ def Plot(self, plot_Springs=True, plot_Shadow=True):
     # Plot the 8 cube points
     x, y, z = zip(*Points)
     ax.scatter(x, y, z, c='r', marker='o')
+    edges = [
+        [Points[0], Points[1], Points[2],
+         Points[3], Points[0]],
+        [Points[4], Points[5], Points[6],
+         Points[7], Points[4]],
+        [Points[0], Points[4]],
+        [Points[1], Points[5]],
+        [Points[2], Points[6]],
+        [Points[3], Points[7]]
+    ]
+    springs = [
+        [Points[0], Points[2]], [Points[0], Points[5]],
+        [Points[0], Points[6]], [Points[1], Points[3]],
+        [Points[1], Points[4]], [Points[1], Points[6]],
+        [Points[1], Points[7]], [Points[2], Points[4]],
+        [Points[2], Points[5]], [Points[2], Points[7]],
+        [Points[3], Points[4]], [Points[3], Points[5]],
+        [Points[3], Points[6]], [Points[4], Points[6]],
+        [Points[5], Points[7]]
+    ]
+    # plot the springs
+    if plot_Springs:
+        for spring in springs:
+            sx, sy, sz = zip(*spring)
+            ax.plot(sx, sy, sz, 'y')
 
-     edges = [
-          [Points[0], Points[1], Points[2],
-            Points[3], Points[0]],
-          [Points[4], Points[5], Points[6],
-                Points[7], Points[4]],
-          [Points[0], Points[4]],
-          [Points[1], Points[5]],
-          [Points[2], Points[6]],
-          [Points[3], Points[7]]
-          ]
-      springs = [
-           [Points[0], Points[2]], [Points[0], Points[5]],
-            [Points[0], Points[6]], [Points[1], Points[3]],
-            [Points[1], Points[4]], [Points[1], Points[6]],
-            [Points[1], Points[7]], [Points[2], Points[4]],
-            [Points[2], Points[5]], [Points[2], Points[7]],
-            [Points[3], Points[4]], [Points[3], Points[5]],
-            [Points[3], Points[6]], [Points[4], Points[6]],
-            [Points[5], Points[7]]
-           ]
-       # plot the springs
-       if plot_Springs:
-            for spring in springs:
-                sx, sy, sz = zip(*spring)
-                ax.plot(sx, sy, sz, 'y')
+    # Plot the edges
+    for edge in edges:
+        ex, ey, ez = zip(*edge)
+        ax.plot(ex, ey, ez, color='b')
+        if plot_Shadow:
+            ax.plot(ex, ey, color='grey')
 
-        # Plot the edges
-        for edge in edges:
-            ex, ey, ez = zip(*edge)
-            ax.plot(ex, ey, ez, color='b')
-            if plot_Shadow:
-                ax.plot(ex, ey, color='grey')
+    # Set axis limits based on the cube and floor size
+    ax.set_xlim([0, self.Floor])
+    ax.set_ylim([0, self.Floor])
+    # 1 unit for the cube and 1 unit for the space above it
+    ax.set_zlim([0, self.Floor])
 
-        # Set axis limits based on the cube and floor size
-        ax.set_xlim([0, self.Floor])
-        ax.set_ylim([0, self.Floor])
-        # 1 unit for the cube and 1 unit for the space above it
-        ax.set_zlim([0, self.Floor])
+    # Set axis labels
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
 
-        # Set axis labels
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+    plt.show()
 
-        plt.show()
+    pass
 
-        pass
-    
+
 def Test():
     p_o = [1, 2, 69]
     Point = Point_Mass([0, 0, 1], p_o=p_o)
@@ -116,3 +120,28 @@ def test_force():
     print(f'F_net = {F_net}')
 
     # force_vector(P1,P2)
+
+
+# Create a figure and axis
+fig, ax = plt.subplots()
+plt.xlim(0, 10)  # Set the x-axis limits
+plt.ylim(0, 10)  # Set the y-axis limits
+
+# Create a point (initially at x=0, y=0)
+point, = ax.plot(0, 0, 'ro')  # 'ro' specifies a red circle marker
+
+# Function to update the point's position in each frame
+
+
+def update(frame):
+    x = frame  # Set x-coordinate (frame number)
+    y = frame  # Set y-coordinate (frame number)
+    point.set_data(x, y)  # Update the point's position
+    return point,
+
+
+# Create the animation
+ani = FuncAnimation(fig, update, frames=range(10), blit=True)
+
+# Display the animation
+plt.show()

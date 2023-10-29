@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import sys
 from collections import defaultdict
+from matplotlib.animation import FuncAnimation
 
 
 class Point_Mass:
@@ -73,16 +74,21 @@ class Cube:
     # TODO Integrate this into a point object structure instead of raw positoin
     # add the indices per the below/
     def __init__(self, P_o=np.ones(3),
-                 floor_size=5):
+                 floor_size=4):
         # GLOBALS
         self.G = -9.81  # Gravity in M/S
         self.dt = 1e-4  # Time constant
+        self.T = 0
         self.damping = .9999  # dont bounce forever
         self.MU_s = 1  # static friction
         self.MU_k = .8  # kinetic friction
         self.k_vertices_soft = 5000
         self.k_ground = 1e5
         self.omega = 10
+
+        # PLOTTING ATTRIBUTES:
+        self.Floor = floor_size  # side length of a box floor
+        self.P_o = P_o    # Initial position of the first corner
 
         # BODY construction
         self.P_o = P_o
@@ -105,10 +111,6 @@ class Cube:
 
         # might store directly on point as attribute?
         self.Forces = np.zeros(self.size)
-
-        # PLOTTING ATTRIBUTES:
-        self.Floor = floor_size  # side length of a box floor
-        self.P_o = P_o    # Initial position of the first corner
 
         pass
 
@@ -136,6 +138,7 @@ class Cube:
         return None
 
     def get_F_external(self, point_mass):
+        # TODO
         return np.zeros(3)
 
     def calc_Net_Force(self, point_mass, mass_ind):
@@ -178,72 +181,103 @@ class Cube:
         #print(f'F_net = {F_net}')
         return F_net
 
-    def Integrate(self):
+    def Integrate_step(self):
         for mass_ind, mass in enumerate(self.Masses):
-            F_net = self.calc_Net_Force(mass, mass_ind)
+            F = self.calc_Net_Force(mass, mass_ind)
+            mass.acc = F/mass.mass
+            mass.vel += mass.acc*self.dt
+            mass.pos += mass.vel*self.dt
 
+        self.T += self.dt
         return None
 
-    # TODO add Plot method!!!
+    def Plot(self, plot_Springs=True, plot_Shadow=True):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
 
+        # Update point positions to plot into this array for easier read
+        P = np.array([m.pos for m in self.Masses])
 
-def Test():
-    p_o = [1, 2, 69]
-    Point = Point_Mass([0, 0, 1], p_o=p_o)
-    print(Point)
-    ind_arr = initialize_indices(N=8)
-    print(ind_arr)
-    aran = np.arange(len(ind_arr))
-    ind_slice = [2 in ind for ind in ind_arr]
-    print(aran[[2 in ind for ind in ind_arr]])
-    springs = np.full(len(ind_arr), None, dtype=Spring)
-    for i, ind in enumerate(ind_arr):
-        springs[i] = Spring(Ind=ind)
-    pass
-    print(springs[1])
+        # Plot Floor #TODO universal
+        COM = [np.mean(P[:, col]) for col in range(len(P[0]))]
+        self.COM = COM
+        floor = [[
+            (COM[0]-self.Floor/2, COM[1]-self.Floor/2, 0),
+            (COM[0]+self.Floor/2, COM[1]-self.Floor/2, 0),
+            (COM[0]+self.Floor/2, COM[1]+self.Floor/2, 0),
+            (COM[0]-self.Floor/2, COM[1]+self.Floor/2, 0)]
+        ]
+        # Plot the floor
+        floor = Poly3DCollection(floor, alpha=0.25, facecolors='g')
+        ax.add_collection3d(floor)
 
+        # Plot the 8 cube points
+        x, y, z = zip(*P)
+        ax.scatter(x, y, z, c='r', marker='o')
 
-def test_force():
-    body = Cube(P_o=np.zeros(3),
-                floor_size=3)
-    # some_cube.Plot()
-    k = 1e4
-    point = 2
-    connected_springs = body.Springs[body.Spring_map[point]]
-    body.Masses[point].pos[1] += .1  # change a bit for testing
-    F_net = np.zeros(3)
-    for s in connected_springs:
+        # Plot Lines
+        edges = [
+            [P[0], P[1], P[2], P[3], P[0]],
+            [P[4], P[5], P[6], P[7], P[4]],
+            [P[0], P[4]],
+            [P[1], P[5]],
+            [P[2], P[6]],
+            [P[3], P[7]]
+        ]
+        springs = [
+            [P[0], P[2]], [P[0], P[5]], [P[0], P[6]],
+            [P[1], P[3]], [P[1], P[4]], [P[1], P[6]],
+            [P[1], P[7]], [P[2], P[4]], [P[2], P[5]],
+            [P[2], P[7]], [P[3], P[4]], [P[3], P[5]],
+            [P[3], P[6]], [P[4], P[6]], [P[5], P[7]]
+        ]
 
-        print(s)
-        flip = False
+        # plot the springs
+        if plot_Springs:
+            for spring in springs:
+                sx, sy, sz = zip(*spring)
+                ax.plot(sx, sy, sz, 'y')
 
-        P1, P2 = body.Masses[list(s.ind)]
-        dist = norm(P2.pos-P1.pos)
-        delta = dist-s.L_o
-        F_scalar = s.K * (dist-s.L_o)
-        unit_vect = (P2.pos-P1.pos) / dist
-        F_vect = F_scalar*unit_vect
+        # Plot the edges
+        for edge in edges:
+            ex, ey, ez = zip(*edge)
+            ax.plot(ex, ey, ez, color='b')
+            if plot_Shadow:
+                ax.plot(ex, ey, color='grey')
 
-        # flip vector if necessary
-        if point != s.ind[0]:
-            flip = True
-            F_vect *= -1
-        F_net += F_vect
-        out = f'Ind: {s.ind} dist = {round(dist,2)} delta = {round(delta,2)} F_s = {round(F_scalar,2)}'
-        out += f'\n F_v = {F_vect} \nflip - {flip} \n - - - - - - -  \n'
-        print(out)
-    print(f'F_net = {F_net}')
+        # Set axis limits based on the cube and floor size
+        ax.set_xlim([COM[0]-self.Floor/2, COM[0]+self.Floor/2])
+        ax.set_ylim([COM[1]-self.Floor/2, COM[1]+self.Floor/2])
+        # 1 unit for the cube and 1 unit for the space above it
+        ax.set_zlim([0, self.Floor])
 
-    # force_vector(P1,P2)
+        # Set axis labels
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+        plt.show()
+
+        pass
+
+    def Run(self, T_max=1):
+        i = 0
+        while self.T < T_max:
+            if i % 10 == 0:
+                self.Plot()
+                plt.pause(.01)
+
+            self.Integrate_step()
+
+            i += 1
 
 
 def main():
-    body = Cube(P_o=np.zeros(3),
-                floor_size=3)
-    point = 2
-    body.Masses[point].pos[1] += .1
-    rslt = body.calc_Net_Force(body.Masses[point], point)
-    Integrate = body.Integrate()
+    body = Cube(P_o=np.ones(3),
+                floor_size=5)
+
+    body.Plot()
+    body.Run()
 
 
 # Plot the cube 1 unit above the 5x5 floor

@@ -59,8 +59,8 @@ class Spring:
         self.L_o = L_o
         self.K = k
         self.ind = Ind
-        #self.M1_int = M1
-        #self.M2_int = M2
+        # self.M1_int = M1
+        # self.M2_int = M2
 
     def __str__(self):
         out = f'{type(self)} '
@@ -83,7 +83,7 @@ class Cube:
         self.MU_s = 1  # static friction
         self.MU_k = .8  # kinetic friction
         self.k_vertices_soft = 5000
-        self.k_ground = 1e3
+        self.k_ground = 1e4
         self.omega = 10
 
         # PLOTTING ATTRIBUTES:
@@ -145,6 +145,7 @@ class Cube:
         connected_springs = self.Springs[self.Spring_map[mass_ind]]
         F_net = np.zeros(3)
         # SPRINGS:
+        '''
         for spring in connected_springs:
             P1, P2 = self.Masses[list(spring.ind)]
             dist = norm(P2.pos-P1.pos)
@@ -158,15 +159,7 @@ class Cube:
                 F_vect *= -1
 
             F_net += F_vect
-
-            ''' Debug print
-
-            delta  = dist-spring.L_o
-            print(spring)
-            out = f'Ind: {spring.ind} dist = {round(dist,2)} delta = {round(delta,2)} F_s = {round(F_scalar,2)}'
-            out +=f'\n F_v = {F_vect}  \n - - - - - - -  \n'
-            print(out)
-            '''
+        '''
         # External:
         F_net += self.get_F_external(point_mass)
 
@@ -178,23 +171,13 @@ class Cube:
             # this needs to be a positive addition to raise the body
             F_net[2] += self.k_ground * -1*point_mass.pos[2]
 
-        #print(f'F_net = {F_net}')
+        # print(f'F_net = {F_net}')
         return F_net
-
-    def Integrate_step(self):
-        for mass_ind, mass in enumerate(self.Masses):
-            F = self.calc_Net_Force(mass, mass_ind)
-            mass.acc = F/mass.mass
-            mass.vel += mass.acc*self.dt
-            mass.pos += mass.vel*self.dt
-
-        self.T += self.dt
-        return None
 
     def Plot(self, plot_Springs=True, plot_Shadow=True, fig=None, ax=None):
 
         if not fig or not ax:
-            #print('creating new')
+            # print('creating new')
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
@@ -265,27 +248,37 @@ class Cube:
 
         pass
 
+    def Integrate_step(self, Verbose=False):
+        for mass_ind, mass in enumerate(self.Masses):
+            mass.F = self.calc_Net_Force(mass, mass_ind)
+            mass.acc = mass.F/mass.mass
+            mass.vel += mass.acc*self.dt
+            mass.pos += mass.vel*self.dt
+
+        self.T += self.dt
+
+        if Verbose:
+            Fz_arr = np.array([m.F[2] for m in self.Masses])
+            Az_arr = np.array([m.acc[2] for m in self.Masses])
+            Vz_arr = np.array([m.vel[2] for m in self.Masses])
+            Z_arr = np.array([m.pos[2] for m in self.Masses])
+            stack = np.vstack((np.arange(len(Fz_arr)),
+                             np.round(Z_arr, 2),
+                             np.round(Az_arr, 2),
+                             np.round(Fz_arr, 2)))
+            out = f''
+            print()
+
+        return None
+
     def Run_Animation(self, T_max=1):
-        '''
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111, projection='3d')
 
-        self.Plot(fig = self.fig, ax = self.ax)
-        plt.pause(2)
-        print(self.fig,self.ax)
-        self.ax.cla()
-        print(self.fig,self.ax)
-
-        '''
-        i = 0
-        while self.T < T_max:
-            if i % 10 == 0:
-                self.Plot()
-                plt.pause(.001)
-
-            self.Integrate_step()
-
-            i += 1
+        for i in range(10000):
+            if i % 50 == 0:
+                print(f'----------STEP {i} --------')
+                self.Integrate_step(Verbose=True)
+                print(f'------------------------\n')
+            else: self.Integrate_step()
 
 
 def main():
@@ -305,3 +298,28 @@ if __name__ == "__main__":
        for _ in range(100):
             self.Integrate_step()
         self.Plot(fig = fig, ax = ax)
+
+
+        '''
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111, projection='3d')
+
+        self.Plot(fig = self.fig, ax = self.ax)
+        plt.pause(2)
+        print(self.fig,self.ax)
+        self.ax.cla()
+        print(self.fig,self.ax)
+
+        i = 0
+        while self.T < T_max and  i<2000:
+            if i % 100 == 0:
+                # self.Plot()
+                plt.pause(.001)
+                self.Integrate_step(Verbose = True)
+                i += 1
+
+            self.Integrate_step()
+
+            i += 1
+        
+        '''

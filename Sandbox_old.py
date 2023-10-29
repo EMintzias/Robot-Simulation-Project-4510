@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
 
@@ -145,3 +146,9 @@ ani = FuncAnimation(fig, update, frames=range(10), blit=True)
 
 # Display the animation
 plt.show()
+# %%
+a = np.arange(5)
+b = a**2
+print(a)
+print(b)
+print(np.vstack((a, b)))

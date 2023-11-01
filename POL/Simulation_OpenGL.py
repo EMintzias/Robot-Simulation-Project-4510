@@ -13,37 +13,31 @@ kc = 100000  # Ground force constant
 b = 0.999 # Dampening constant
 
 # Initialize cube
-cube = Cube(k_value=5000)
+cube = Cube(k_value=9000)
+
+def draw_cube_faces(cube):
+    base_color = (3/255, 148/255, 252/255)  # Blue color
+    glBegin(GL_QUADS)
+    for i, face in enumerate(cube.faces):
+        color_factor = 0.4 + (i + 1)*0.05  # '+1' to avoid zero multiplier for the first face
+        glColor3f(base_color[0]*color_factor, base_color[1]*color_factor, base_color[2]*color_factor)
+        for mass in face:
+            glVertex3fv(mass.p)
+    glEnd()
 
 def draw_shadow(cube):
     glColor3f(0.3, 0.3, 0.3)  # Dark gray color for shadow
-    glBegin(GL_LINES)
-    for spring in cube.springs:
-        start_point = list(spring.m1.p)
-        end_point = list(spring.m2.p)
-        start_point[2] = 0  # Set z-coordinate to 0
-        end_point[2] = 0    # Set z-coordinate to 0
-        glVertex3fv(start_point)
-        glVertex3fv(end_point)
+    glBegin(GL_QUADS)
+    for i, face in enumerate(cube.faces):
+        for mass in face:
+            glVertex3fv([mass.p[0], mass.p[1], 0.00001])
     glEnd()
 
 def draw_cube(cube):
-    glLineWidth(1)
+    # Draw shadow first
     draw_shadow(cube)
-    glBegin(GL_LINES)
-    glColor3f(3/255*0.5, 148/255*0.5, 252/255*0.5)  # Blue color for springs
-    for spring in cube.springs:
-        start_point = spring.m1.p
-        end_point = spring.m2.p
-        glVertex3fv(start_point)
-        glVertex3fv(end_point)
-    glEnd()
-
-    glBegin(GL_POINTS)
-    glColor3f(1.0, 0.0, 0.0)  # Red color for masses
-    for mass in cube.masses:
-        glVertex3fv(mass.p)
-    glEnd()
+    # Then draw the cube's faces
+    draw_cube_faces(cube)
 
 def draw_ground():
     glColor3f(0.5, 0.5, 0.5)
@@ -54,6 +48,24 @@ def draw_ground():
     glVertex3f(-0.3, 0.5, 0)
     glEnd()
 
+def render_text(x, y, text):
+    glMatrixMode(GL_PROJECTION)
+    glPushMatrix()
+    glLoadIdentity()
+    glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0)
+    glMatrixMode(GL_MODELVIEW)
+    glPushMatrix()
+    glLoadIdentity()
+    glColor3f(0, 0, 0)
+    glRasterPos2f(x, y)
+    for char in text:
+        glutBitmapCharacter(GLUT_BITMAP_9_BY_15, ord(char))
+    glPopMatrix()
+    glMatrixMode(GL_PROJECTION)
+    glPopMatrix()
+    glMatrixMode(GL_MODELVIEW)
+
+
 def main(cube):
     pygame.init()
     display = (800,600)
@@ -61,6 +73,8 @@ def main(cube):
     gluPerspective(45, (display[0]/display[1]), 0.1, 100.0)
     gluLookAt(-0.7, -0.7, 0.7, 0, 0, 0, 0, 0, 1)
     glClearColor(0.53, 0.81, 0.98, 1)
+    glDisable(GL_CULL_FACE)
+    glEnable(GL_DEPTH_TEST)
 
     while True:
         for event in pygame.event.get():
@@ -71,6 +85,11 @@ def main(cube):
         global T, global_step, total_elapsed_time
         # Loop over all masses
         start_time = time.time()
+        # Breathing cube ?
+        for spring in cube.springs:
+            print(0.005*np.sin(global_step*0.001))
+            spring.L0 += 0.00005*np.sin(global_step*0.001)
+
         for i, mass in enumerate(cube.masses):
             # Initial force is 0
             F = np.zeros(3)
@@ -106,12 +125,15 @@ def main(cube):
         global_step += 1
         total_elapsed_time += time.time() - start_time
         #print(f"Each update loop takes on avg {total_elapsed_time/global_step:.6f} seconds")
-
-        #glRotatef(1, 3, 1, 1)
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-        draw_ground()
-        draw_cube(cube)
-        pygame.display.flip()
-        pygame.time.wait(10)
+        if global_step%20 == 1:
+            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+            draw_ground()
+            draw_cube(cube)
+            # Convert the time to a string
+            text_string = f"Time: {T:.2f} seconds"
+            # Render the text in the top-right corner using GLUT
+            render_text(0.6, 0.9, text_string)
+            pygame.display.flip()
+            pygame.time.wait(10)
 
 main(cube)

@@ -20,7 +20,7 @@ class Spring:
 
 # Cube class
 class Cube:
-    def __init__(self, cube_size=0.1, p_0= np.dot([0, 0, 1], 0.2), mass_value=0.1, k_value=10000):
+    def __init__(self, cube_size=0.1, p_0= np.dot([0, 0, 1], 0.0), mass_value=0.1, k_value=10000):
         # Initialize vertices
         vertices = [
             np.dot([0, 0, 0.], cube_size), np.dot([1, 0, 0.], cube_size),
@@ -38,3 +38,15 @@ class Cube:
             for j, m2 in enumerate(self.masses[i + 1:]):
                 self.springs.append(Spring(m1, m2, k_value))
 
+        # Initialize faces for PyOpenGL plotting
+        self.faces = [
+            [self.masses[i] for i in [0, 1, 2, 3]],
+            [self.masses[i] for i in [4, 5, 6, 7]],
+            [self.masses[i] for i in [0, 4, 7, 3]],
+            [self.masses[i] for i in [1, 5, 6, 2]],
+            [self.masses[i] for i in [0, 1, 5, 4]],
+            [self.masses[i] for i in [3, 2, 6, 7]]
+        ]
+
+
+# %%

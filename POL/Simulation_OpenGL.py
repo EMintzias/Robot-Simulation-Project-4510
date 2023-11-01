@@ -85,10 +85,10 @@ def main(cube):
         global T, global_step, total_elapsed_time
         # Loop over all masses
         start_time = time.time()
-        # Breathing cube ?
-        for spring in cube.springs:
-            print(0.005*np.sin(global_step*0.001))
-            spring.L0 += 0.00005*np.sin(global_step*0.001)
+        # BREATHING CUBE
+        if False:
+            for spring in cube.springs:
+                spring.L0 += 0.00005*np.sin(global_step*0.001)
 
         for i, mass in enumerate(cube.masses):
             # Initial force is 0

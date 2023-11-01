@@ -15,10 +15,12 @@ def Test():
 def main():
     some_cube = Cube(P_o=np.array([1, 2, 3]),
                      floor_size=3)
-    # some_cube.Plot()
+    some_cube.Plot()
     print(type(some_cube))
 
 
 if __name__ == "__main__":
     # Test()
     main()
+
+# %%

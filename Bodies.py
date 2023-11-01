@@ -1,46 +1,15 @@
-# %%
-import numpy as np
-from numpy.linalg import norm
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import sys
-from collections import defaultdict
-from matplotlib.animation import FuncAnimation
+#%%
+from Project_Libries import *
 
-
+#%%
+# Point mass class
 class Point_Mass:
-
-    def __init__(self,
-                 pos,
-                 mass=.1,
-                 p_o=np.zeros(3),
-                 vel=np.zeros(3),
-                 acc=np.zeros(3),
-                 Force=np.zeros(3),
-                 ind=None) -> None:
-        # Intiializing position
-        try:
-            # Check for type errors?
-
-            if len(pos) != 3:
-                msg = ''
-                msg += f"Invalid input for position: {pos}"
-                msg += f'Entered an array with length = {len(pos)}'
-                msg += '\n\t Should have length = 3'
-                raise ValueError(msg)
-
-            else:
-                self.pos = np.array(pos) + p_o
-
-        except ValueError as err_msg:
-            print(err_msg)
-            sys.exit()  # exit if there is an issue
-
-        self.mass = mass  # in KG
+    def __init__(self, pos, mass=.1, p_o=np.zeros(3), vel=np.zeros(3), acc=np.zeros(3), Force=np.zeros(3), ind=None):
+        self.pos = np.array(pos) + p_o
+        self.mass = mass
         self.vel = vel
         self.acc = acc
         self.F = Force
-        pass
 
     def __str__(self):
         out = f'{type(self)} '
@@ -50,17 +19,13 @@ class Point_Mass:
         out += f'\n\t Acc = {self.acc}'
         return out
 
-
+#%%
+# Spring class
 class Spring:
-    def __init__(self, Ind: tuple,
-                 L_o=.1,
-                 k=1e4,
-                 ) -> None:
+    def __init__(self, Ind:tuple, L_o=.1, k=1e4):
         self.L_o = L_o
         self.K = k
         self.ind = Ind
-        # self.M1_int = M1
-        # self.M2_int = M2
 
     def __str__(self):
         out = f'{type(self)} '
@@ -70,56 +35,50 @@ class Spring:
         return out
 
 
+#%%
+# Cube class
 class Cube:
-    # TODO Integrate this into a point object structure instead of raw positoin
-    # add the indices per the below/
-    def __init__(self, P_o=np.ones(3),
-                 floor_size=4):
-        # GLOBALS
-        self.G = -9.81  # Gravity in M/S
+    def __init__(self, P_o=np.ones(3), cube_size=1, floor_size=4, spring_variables=(.9999, 5000, 1e4)):
+        # GLOBAL VARIABLES
+        self.G = -9.81  # Gravity
         self.dt = 1e-4  # Time constant
-        self.T = 0
-        self.damping = .9999  # dont bounce forever
-        self.MU_s = 1  # static friction
-        self.MU_k = .8  # kinetic friction
-        self.k_vertices_soft = 5000
-        self.k_ground = 1e4
-        self.omega = 10
+        self.T = 0      # Global Time
+        # Spring Variables
+        self.damping = spring_variables[0]
+        self.k_edges = spring_variables[1]
+        self.k_ground = spring_variables[2]
 
         # PLOTTING ATTRIBUTES:
-        self.Floor = floor_size  # side length of a box floor
-        self.P_o = P_o    # Initial position of the first corner
+        self.Floor = floor_size     # Side length of a box floor
+        self.P_o = P_o              # Initial position of the first corner
 
-        # BODY construction
+        # Initialize point masses
         self.P_o = P_o
         self.Masses = np.array([
-            Point_Mass([0, 0, 0], p_o=P_o),
-            Point_Mass([1, 0, 0], p_o=P_o),
-            Point_Mass([1, 1, 0], p_o=P_o),
-            Point_Mass([0, 1, 0], p_o=P_o),
-            Point_Mass([0, 0, 1], p_o=P_o),
-            Point_Mass([1, 0, 1], p_o=P_o),
-            Point_Mass([1, 1, 1], p_o=P_o),
-            Point_Mass([0, 1, 1], p_o=P_o)
+            Point_Mass(np.dot([0, 0, 0], cube_size), p_o=P_o),
+            Point_Mass(np.dot([1, 0, 0], cube_size), p_o=P_o),
+            Point_Mass(np.dot([1, 1, 0], cube_size), p_o=P_o),
+            Point_Mass(np.dot([0, 1, 0], cube_size), p_o=P_o),
+            Point_Mass(np.dot([0, 0, 1], cube_size), p_o=P_o),
+            Point_Mass(np.dot([1, 0, 1], cube_size), p_o=P_o),
+            Point_Mass(np.dot([1, 1, 1], cube_size), p_o=P_o),
+            Point_Mass(np.dot([0, 1, 1], cube_size), p_o=P_o)
         ])
         for i, m in enumerate(self.Masses):
             m.ind = i
-
         self.size = self.Masses.size
+        
+        # Initialize springs based on the masses above
+        self.initalize_springs()
 
-        self.initalize_springs()  # Initialize springs based on the above
-
-        # might store directly on point as attribute?
         self.Forces = np.zeros(self.size)
 
-        pass
-
     def initalize_springs(self):
-        # create all posible pairs (28 for cube)
+        # Create all posible pairs (28 for cube)
         ind_arr = [(i, j) for i in range(self.size)
                    for j in range(i+1, self.size)]
-
-        # add indicees and initial length to a list of springs
+        
+        # Add indicees and initial length to a list of springs
         self.Springs = np.array(np.full(len(ind_arr), None, dtype=Spring))
         for i, ind in enumerate(ind_arr):
             l_o = norm(self.Masses[ind[0]].pos - self.Masses[ind[1]].pos)
@@ -137,6 +96,101 @@ class Cube:
 
         return None
 
+    def init_plot(self, plot_Springs=True, plot_Shadow=True, fig=None, ax=None):
+        # Update point positions to plot into this array for easier read
+        P = np.array([m.pos for m in self.Masses])
+        
+        edges = [
+            [P[0], P[1], P[2], P[3], P[0]],
+            [P[4], P[5], P[6], P[7], P[4]],
+            [P[0], P[4]],
+            [P[1], P[5]],
+            [P[2], P[6]],
+            [P[3], P[7]]
+        ]
+        springs = [
+            [P[0], P[2]], [P[0], P[5]], [P[0], P[6]],
+            [P[1], P[3]], [P[1], P[4]], [P[1], P[6]],
+            [P[1], P[7]], [P[2], P[4]], [P[2], P[5]],
+            [P[2], P[7]], [P[3], P[4]], [P[3], P[5]],
+            [P[3], P[6]], [P[4], P[6]], [P[5], P[7]]
+        ]
+
+        if not fig or not ax:
+            # print('creating new')
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+
+        
+
+        # Plot Floor #TODO universal
+        COM = [np.mean(P[:, col]) for col in range(len(P[0]))]
+        self.COM = COM
+        floor = [[
+            (COM[0]-self.Floor/2, COM[1]-self.Floor/2, 0),
+            (COM[0]+self.Floor/2, COM[1]-self.Floor/2, 0),
+            (COM[0]+self.Floor/2, COM[1]+self.Floor/2, 0),
+            (COM[0]-self.Floor/2, COM[1]+self.Floor/2, 0)]
+        ]
+        # Plot the floor
+        floor = Poly3DCollection(floor, alpha=0.25, facecolors='g')
+        ax.add_collection3d(floor)
+
+        # Plot the 8 cube points
+        x, y, z = zip(*P)
+        ax.scatter(x, y, z, c='r', marker='o')
+
+        # Plot Lines
+        
+
+        # plot the springs
+        if plot_Springs:
+            for spring in springs:
+                sx, sy, sz = zip(*spring)
+                ax.plot(sx, sy, sz, 'y')
+
+        # Plot the edges
+        for edge in edges:
+            ex, ey, ez = zip(*edge)
+            ax.plot(ex, ey, ez, color='b')
+            if plot_Shadow:
+                ax.plot(ex, ey, color='grey')
+
+        # Set axis limits based on the cube and floor size
+        ax.set_xlim([COM[0]-self.Floor/2, COM[0]+self.Floor/2])
+        ax.set_ylim([COM[1]-self.Floor/2, COM[1]+self.Floor/2])
+        # 1 unit for the cube and 1 unit for the space above it
+        ax.set_zlim([0, self.Floor])
+
+        # Set axis labels
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+        if not fig or not ax:
+            plt.show()
+
+        return None
+
+    
+    def update_plot(self, point_artists, line_artists):
+        # Update positions of all elements
+        self.Integrate_step()
+        # Update point positions to plot into this array for easier read
+        P = np.array([m.pos for m in self.Masses])
+        
+        x, y, z = zip(*P)
+        point_artists._offsets3d = (x, y, z)
+
+        # Update line positions
+        all_lines = edges + springs
+        for line, line_artist in zip(all_lines, line_artists):
+            ex, ey, ez = zip(*line)
+            line_artist.set_data(ex, ey)
+            line_artist.set_3d_properties(ez)
+
+        return point_artists, line_artists
+    
     def get_F_external(self, point_mass):
         # TODO
         return np.zeros(3)
@@ -174,81 +228,7 @@ class Cube:
         # print(f'F_net = {F_net}')
         return F_net
 
-    def Plot(self, plot_Springs=True, plot_Shadow=True, fig=None, ax=None):
-
-        if not fig or not ax:
-            # print('creating new')
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-
-        # Update point positions to plot into this array for easier read
-        P = np.array([m.pos for m in self.Masses])
-
-        # Plot Floor #TODO universal
-        COM = [np.mean(P[:, col]) for col in range(len(P[0]))]
-        self.COM = COM
-        floor = [[
-            (COM[0]-self.Floor/2, COM[1]-self.Floor/2, 0),
-            (COM[0]+self.Floor/2, COM[1]-self.Floor/2, 0),
-            (COM[0]+self.Floor/2, COM[1]+self.Floor/2, 0),
-            (COM[0]-self.Floor/2, COM[1]+self.Floor/2, 0)]
-        ]
-        # Plot the floor
-        floor = Poly3DCollection(floor, alpha=0.25, facecolors='g')
-        ax.add_collection3d(floor)
-
-        # Plot the 8 cube points
-        x, y, z = zip(*P)
-        ax.scatter(x, y, z, c='r', marker='o')
-
-        # Plot Lines
-        edges = [
-            [P[0], P[1], P[2], P[3], P[0]],
-            [P[4], P[5], P[6], P[7], P[4]],
-            [P[0], P[4]],
-            [P[1], P[5]],
-            [P[2], P[6]],
-            [P[3], P[7]]
-        ]
-        springs = [
-            [P[0], P[2]], [P[0], P[5]], [P[0], P[6]],
-            [P[1], P[3]], [P[1], P[4]], [P[1], P[6]],
-            [P[1], P[7]], [P[2], P[4]], [P[2], P[5]],
-            [P[2], P[7]], [P[3], P[4]], [P[3], P[5]],
-            [P[3], P[6]], [P[4], P[6]], [P[5], P[7]]
-        ]
-
-        # plot the springs
-        if plot_Springs:
-            for spring in springs:
-                sx, sy, sz = zip(*spring)
-                ax.plot(sx, sy, sz, 'y')
-
-        # Plot the edges
-        for edge in edges:
-            ex, ey, ez = zip(*edge)
-            ax.plot(ex, ey, ez, color='b')
-            if plot_Shadow:
-                ax.plot(ex, ey, color='grey')
-
-        # Set axis limits based on the cube and floor size
-        ax.set_xlim([COM[0]-self.Floor/2, COM[0]+self.Floor/2])
-        ax.set_ylim([COM[1]-self.Floor/2, COM[1]+self.Floor/2])
-        # 1 unit for the cube and 1 unit for the space above it
-        ax.set_zlim([0, self.Floor])
-
-        # Set axis labels
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-
-        if not fig or not ax:
-            # print('showing')
-            plt.show()
-
-        pass
-
-    def Integrate_step(self, Verbose=False):
+    def Integrate_step(self):
         for mass_ind, mass in enumerate(self.Masses):
             mass.F = self.calc_Net_Force(mass, mass_ind)
             mass.acc = mass.F/mass.mass
@@ -257,36 +237,30 @@ class Cube:
 
         self.T += self.dt
 
-        if Verbose:
-            Fz_arr = np.array([m.F[2] for m in self.Masses])
-            Az_arr = np.array([m.acc[2] for m in self.Masses])
-            Vz_arr = np.array([m.vel[2] for m in self.Masses])
-            Z_arr = np.array([m.pos[2] for m in self.Masses])
-            stack = np.vstack((np.arange(len(Fz_arr)),
-                             np.round(Z_arr, 2),
-                             np.round(Az_arr, 2),
-                             np.round(Fz_arr, 2)))
-            out = f''
-            print()
-
         return None
 
-    def Run_Animation(self, T_max=1):
-
-        for i in range(10000):
-            if i % 50 == 0:
-                print(f'----------STEP {i} --------')
-                self.Integrate_step(Verbose=True)
-                print(f'------------------------\n')
-            else: self.Integrate_step()
 
 
+#%%
 def main():
-    body = Cube(P_o=np.ones(3),
-                floor_size=5)
+    # INITIALIZE CUBEs
+    # Cube Variables
+    damping = .9999
+    k_edges = 10000
+    k_ground = 1e6
+    init_cube_pos = np.dot(np.ones(3), 4)
+    cube_size = 1
 
-    # body.Plot()
-    body.Run_Animation()
+    body = Cube(P_o=init_cube_pos, cube_size=cube_size, floor_size=4, spring_variables=(damping, k_edges, k_ground))
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    point_artists, line_artists = body.init_plot(fig=fig, ax=ax)
+
+    # Modify the update function to include the artists as arguments
+    ani = FuncAnimation(fig, lambda frame: body.update_plot(point_artists, line_artists), blit=True)
+    
+    plt.show()
 
 
 # Plot the cube 1 unit above the 5x5 floor
@@ -294,32 +268,3 @@ if __name__ == "__main__":
     main()
     # test_force()
     # Test()
-# %%
-       for _ in range(100):
-            self.Integrate_step()
-        self.Plot(fig = fig, ax = ax)
-
-
-        '''
-        self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111, projection='3d')
-
-        self.Plot(fig = self.fig, ax = self.ax)
-        plt.pause(2)
-        print(self.fig,self.ax)
-        self.ax.cla()
-        print(self.fig,self.ax)
-
-        i = 0
-        while self.T < T_max and  i<2000:
-            if i % 100 == 0:
-                # self.Plot()
-                plt.pause(.001)
-                self.Integrate_step(Verbose = True)
-                i += 1
-
-            self.Integrate_step()
-
-            i += 1
-        
-        '''

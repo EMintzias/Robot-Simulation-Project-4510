@@ -3,7 +3,7 @@ from Libraries import *
 from Datastructures import Cube
 
 # Number of cores 
-num_cores = os.cpu_count() #8
+num_cores = 2 #os.cpu_count() #8
 
 # Global Variables
 g = np.array([0, 0, -9.81])  # Gravity
@@ -15,7 +15,7 @@ kc = 100000  # Ground force constant
 b = 0.999 # Dampening constant
 
 # Initialize cubes
-num_cubes = 10
+num_cubes = 4
 cubes = np.empty(num_cubes, dtype=object)
 
 for i in range(num_cubes):
@@ -147,14 +147,14 @@ def main():
         start_time = time.time()
 
         # Loop over all cubes and update masses in parallel
-        cubes = list(executor.map(update_cube, cubes))
+        list(executor.map(update_cube, cubes))
 
         
         T += dt
         global_step += 1
 
-        total_elapsed_time += time.time() - start_time
-        print(f"Each update loop takes on avg {total_elapsed_time/global_step:.6f} seconds")
+        total_elapsed_time = time.time() - start_time
+        print(f"Each update loop takes {total_elapsed_time:.6f} seconds")
 
         if global_step%20 == 1:
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
@@ -166,7 +166,8 @@ def main():
             # Render the text in the top-right corner using GLUT
             render_text(0.6, 0.9, text_string)
             pygame.display.flip()
-            pygame.time.wait(10)
+            #pygame.time.wait(10)
 
 if __name__ == "__main__":
-    main()
+    #main()
+    cProfile.run('main()', 'profiling_parallel.out')

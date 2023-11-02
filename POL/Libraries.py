@@ -14,7 +14,10 @@ import threading
 import datetime
 import pickle
 import os
-# Parallelization
+# NUMBA (C-python)
+from numba import jit, prange, float64
+# Parallelization & debugging runtime
+import cProfile
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool, cpu_count
 # pyOpenGL

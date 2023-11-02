@@ -14,6 +14,9 @@ import threading
 import datetime
 import pickle
 import os
+# Parallelization
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool, cpu_count
 # pyOpenGL
 import pygame
 from pygame.locals import *

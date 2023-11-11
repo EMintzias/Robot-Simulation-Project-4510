@@ -1,6 +1,6 @@
 #%%
 from Libraries import *
-from Datastructures import Cube
+from Datastructures import *
 
 # Global Variables
 g = np.array([0, 0, -9.81])  # Gravity
@@ -14,15 +14,17 @@ b = 0.999 # Dampening constant
 # cube = Cube(p_0= np.dot([0, 0, 1], 0.3), k_value=9000)
 
 # Initialize cubes
-num_cubes = 1
-cubes = np.empty(num_cubes, dtype=object)
+#num_cubes = 1
+#cubes = np.empty(num_cubes, dtype=object)
 
+#for i in range(num_cubes):
+#    x_rand = 0#np.random.uniform(-0.3, 0.3)
+#    y_rand = 0#np.random.uniform(-0.3, 0.3)
+#    z_rand = 0.9#np.random.uniform(0.2, 0.5)
+#    cubes[i] = Cube(p_0= [x_rand, y_rand, z_rand], k_value=9000)
 
-for i in range(num_cubes):
-    x_rand = 0#np.random.uniform(-0.3, 0.3)
-    y_rand = 0#np.random.uniform(-0.3, 0.3)
-    z_rand = 0.9#np.random.uniform(0.2, 0.5)
-    cubes[i] = Cube(p_0= [x_rand, y_rand, z_rand], k_value=9000)
+# Initialize lattice
+lattice = CubeLattice(lattice_size=1, k_value=9000, p_0 = [0,0,0.9])
 
 def draw_cube_faces(cube):
     base_color = (0/255, 120/255, 200/255)  # Blue color
@@ -46,20 +48,52 @@ def draw_cube_faces(cube):
             glVertex3fv(face[(i + 1) % len(face)].p)  # Loop back to the start for the last line
         glEnd()
 
+def draw_masses_and_springs(cube):
+    mass_color = (1, 0, 0)  # Red color for masses
+    spring_color = (0, 1, 0)  # Green color for springs
+    mass_size = 5  # Size of the mass points
+    spring_width = 1  # Width of the springs
+
+    # Draw masses
+    glPointSize(mass_size)
+    glColor3fv(mass_color)
+    glBegin(GL_POINTS)
+    for mass in cube.masses:
+        glVertex3fv(mass.p)
+    glEnd()
+
+    # Draw springs
+    glLineWidth(spring_width)
+    glColor3fv(spring_color)
+    glBegin(GL_LINES)
+    for spring in cube.springs:
+        glVertex3fv(spring.m1.p)
+        glVertex3fv(spring.m2.p)
+    glEnd()
 
 def draw_shadow(cube):
-    glColor3f(0.2, 0.2, 0.2)  # Dark gray color for shadow
-    glBegin(GL_QUADS)
-    for i, face in enumerate(cube.faces):
-        for mass in face:
-            glVertex3fv([mass.p[0], mass.p[1], -0.001])
+    shadow_color = (0.2, 0.2, 0.2)  # Dark gray color for shadow
+    spring_shadow_width = 1  # Width of the spring shadows
+
+    # Set the color and line width for the shadows
+    glColor3fv(shadow_color)
+    glLineWidth(spring_shadow_width)
+
+    # Draw shadows of the springs
+    glBegin(GL_LINES)
+    for spring in cube.springs:
+        # Project the mass positions onto the ground plane (z = 0)
+        glVertex3f(spring.m1.p[0], spring.m1.p[1], -0.001)
+        glVertex3f(spring.m2.p[0], spring.m2.p[1], -0.001)
     glEnd()
+
 
 def draw_cube(cube):
     # Draw shadow first
     draw_shadow(cube)
     # Then draw the cube's faces
-    draw_cube_faces(cube)
+    #draw_cube_faces(cube)
+    draw_masses_and_springs(cube)
 
 def draw_ground():
     dark_grey = (0.4, 0.4, 0.4)  # Dark grey color
@@ -147,7 +181,7 @@ def update_cube(cube):
     cube.masses = [update_mass(mass) for mass in cube.masses]
     return cube
 
-def main(cubes):
+def main(cube):
     global T, global_step
 
     pygame.init()
@@ -174,8 +208,7 @@ def main(cubes):
         start_time = time.time()
         
         # Loop over all masses
-        for i, cube in enumerate(cubes):
-            update_cube(cube)
+        update_cube(cube)
         
         T += dt
         global_step += 1
@@ -186,8 +219,7 @@ def main(cubes):
 
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
             draw_ground()
-            for cube in cubes:
-                draw_cube(cube)
+            draw_cube(cube)
             # Convert the time to a string
             text_string = f"Time: {T:.2f} seconds"
             # Render the text in the top-right corner using GLUT
@@ -196,6 +228,6 @@ def main(cubes):
             #pygame.time.wait(10)
 
 if __name__ == "__main__":
-    main(cubes)
+    main(lattice)
     #cProfile.run('main(cubes)', 'profiling.out')
 

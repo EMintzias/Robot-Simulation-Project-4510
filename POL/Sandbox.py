@@ -1,4 +1,23 @@
 #%%
+from Libraries import *
+from Datastructures import *
+
+cube_size=0.1
+lattice_size=3
+mass_value=0.1
+k_value=10000
+
+# Create a grid of masses
+masses = {}
+for x in range(lattice_size + 1):
+    for y in range(lattice_size + 1):
+        for z in range(lattice_size + 1):
+            position = np.array([x, y, z]) * cube_size
+            masses[(x, y, z)] = Mass(mass_value, position)
+
+print(len(masses))
+
+#%%
 for i, mass in enumerate(cube.masses):
             # Initial force is 0
             F = np.zeros(3)

@@ -4,7 +4,7 @@ from Datastructures import *
 
 # Global Variables
 g = np.array([0, 0, -9.81])  # Gravity
-dt = 0.0001  # Time-step
+dt = 0.000075  # Time-step
 T = 0  # Global time variable
 global_step = 0
 kc = 100000  # Ground force constant
@@ -24,7 +24,7 @@ b = 0.999 # Dampening constant
 #    cubes[i] = Cube(p_0= [x_rand, y_rand, z_rand], k_value=9000)
 
 # Initialize lattice
-lattice = CubeLattice(lattice_size=1, k_value=9000, p_0 = [0,0,0.9])
+lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0.9])
 
 def draw_cube_faces(cube):
     base_color = (0/255, 120/255, 200/255)  # Blue color
@@ -188,7 +188,7 @@ def main(cube):
     display = (800,600)
     pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
     gluPerspective(45, (display[0]/display[1]), 0.1, 100.0)
-    gluLookAt(-1.5, -1.5, .5, 0, 0, 0, 0, 0, 1)
+    gluLookAt(-3.5, -3.5, 2.5, 0, 0, 0, 0, 0, 1)
     glClearColor(0.53, 0.81, 0.98, 1)
     glDisable(GL_CULL_FACE)
     glEnable(GL_DEPTH_TEST)

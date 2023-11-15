@@ -1,8 +1,7 @@
-#%%
-from Libraries import *
-
 # %%
+#from Libraries import *
 # Mass class
+import numpy as np
 class Mass:
     def __init__(self, m, p, p_0 = np.zeros(3)):
         self.m = m
@@ -54,10 +53,17 @@ class Cube:
             [self.masses[i] for i in [0, 1, 5, 4]],
             [self.masses[i] for i in [2, 3, 7, 6]]
         ]
-
-        for i in self.masses:
-            print(len(i.springs))
-
+        self.COM_update()
+        
+        
+    def COM_update(self):
+        rslt = np.zeros(3)
+        total_mass = 0
+        for mass in self.masses:
+            rslt  += mass.p * mass.m
+            total_mass += mass.m
+        self.COM = rslt/total_mass
+        return rslt/total_mass
 
 # Cube Lattice class
 class CubeLattice:
@@ -88,10 +94,23 @@ class CubeLattice:
                                 springs.append(spring)
                                 mass1.add_spring(spring)
                                 mass2.add_spring(spring)
-        self.springs = springs
-
-        for i in self.masses:
-            print(len(i.springs))
+        self.springs = springs 
+        self.COM_update()
+        
+    def COM_update(self):
+        rslt = np.zeros(3)
+        total_mass = 0
+        for mass in self.masses:
+            rslt  += mass.p * mass.m
+            total_mass += mass.m
+        self.COM = rslt/total_mass
+        return rslt/total_mass
+            
+            
 
 
 # %%
+lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0])
+com = lattice.COM
+print(com)
+

@@ -215,7 +215,7 @@ def main(cube):
 
         #print(f"Each update loop takes {time.time() - start_time:.6f} seconds")
 
-        if global_step%20 == 1:
+        if global_step%200 == 1:
 
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
             draw_ground()
@@ -223,7 +223,7 @@ def main(cube):
             # Convert the time to a string
             text_string = f"Time: {T:.2f} seconds"
             # Render the text in the top-right corner using GLUT
-            render_text(0.6, 0.9, text_string)
+            #render_text(0.6, 0.9, text_string)
             pygame.display.flip()
             #pygame.time.wait(10)
 

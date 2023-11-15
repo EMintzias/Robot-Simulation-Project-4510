@@ -24,7 +24,10 @@ class Spring:
         
         self.k = k   
         self.b = 0    
-        self.c = 0         
+        self.c = 0 
+        
+    def update_center(self):
+        self.center = (self.m1.p+self.m2.p)/2   
 
         
 
@@ -117,7 +120,7 @@ class CubeLattice:
 
 class Custom_body_1:
     def __init__(self, cube_size=0.1,  mass_value=0.1, k_value=9000, p_0=np.dot([0, 0, 0], 0.0),
-                 Genome_size = 5) -> None:
+                 Genome_size = 8) -> None:
         self.fitness = 1e-7
         
         # maps to properties (k,b,c)
@@ -169,7 +172,8 @@ class Custom_body_1:
     
     
     def Update_springs(self):
-        for s in np.random.choice(self.springs, size = 5):
+        for s in self.springs:
+            s.update_center() #should not be necessary since this is called after initialized but more robust here
             dist = [np.linalg.norm(s.center - g_pt) for g_pt in self.genome[:,0]]
             min_ind = np.argmin(dist)
             s.k,s.b,s.c = self.genome[min_ind,1]

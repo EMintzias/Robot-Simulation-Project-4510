@@ -2,6 +2,7 @@
 #from Libraries import *
 # Mass class
 import numpy as np
+from collections import defaultdict
 class Mass:
     def __init__(self, m, p, p_0 = np.zeros(3)):
         self.m = m
@@ -18,8 +19,14 @@ class Spring:
     def __init__(self, m1, m2, k):
         self.m1 = m1
         self.m2 = m2
-        self.k = k
         self.L0 = np.linalg.norm(m1.p - m2.p)
+        self.center = (m1.p+m2.p) /2
+        
+        self.k = k   
+        self.b = 0    
+        self.c = 0         
+
+        
 
 # Cube class
 class Cube:
@@ -109,18 +116,46 @@ class CubeLattice:
 
 
 class Custom_body_1:
-    def __init__(self) -> None:
+    def __init__(self, cube_size=0.1,  mass_value=0.1, k_value=9000, p_0=np.dot([0, 0, 0], 0.0),
+                 Genome_size = 5) -> None:
         self.fitness = 1e-7
-        self.genome = np.ones(5)
+        
+        # maps to properties (k,b,c)
+        self.tissue_dict = {1:(1000,0,0), 2:(20000,0,0), 3:(5000,.25,0), 4:(5000,0,np.pi)}
 
         points = np.genfromtxt("table_body.txt", delimiter=',')
-        self.masses = np.zeros((len(points),3))
+        #self.masses = np.zeros((len(points),3))
+        masses_dict = defaultdict(lambda: None)
         
-        for i in range(points.size):
-            self.masses[i] = 
+        for i,point in enumerate(points):
+            masses_dict[tuple(point)] = Mass(mass_value, point * cube_size, p_0=p_0)
+            
+        self.masses = list(masses_dict.values())
+
+        springs =[]
+        for point in points:
+            x,y,z = point
+            cube_masses = [masses_dict[(x+dx, y+dy, z+dz)] for dx in range(2) for dy in range(2) for dz in range(2)]
+            cube_masses = [mass for mass in cube_masses if mass is not None]
+            for i, mass1 in enumerate(cube_masses):
+                for mass2 in cube_masses[i+1:]:
+                    # Check if a spring already exists between these two masses
+                    if not any(spring.m1 == mass1 and spring.m2 == mass2 or 
+                            spring.m1 == mass2 and spring.m2 == mass1 for spring in mass1.springs):
+                        spring = Spring(mass1, mass2, k_value)
+                        springs.append(spring)
+                        mass1.add_spring(spring)
+                        mass2.add_spring(spring)
+        self.springs = springs 
         
         
+        #Genome is a set of points with a corresponding tuple of properties (K,b,c)
+        genome_points = [m.p for m in np.random.choice(self.masses, size=Genome_size, replace=False)]
+
+        
+        self.genome = np.array([[pt , self.tissue_dict[np.random.choice([1,2,3,4])]] for pt in genome_points ])
         self.COM_update()
+        self.Update_springs()
         
         
     def COM_update(self):
@@ -131,16 +166,24 @@ class Custom_body_1:
             total_mass += mass.m
         self.COM = rslt/total_mass
         return rslt/total_mass   
-        
-        
-        
-        
-        pass
+    
+    
+    def Update_springs(self):
+        for s in np.random.choice(self.springs, size = 5):
+            dist = [np.linalg.norm(s.center - g_pt) for g_pt in self.genome[:,0]]
+            min_ind = np.argmin(dist)
+            s.k,s.b,s.c = self.genome[min_ind,1]
+            pass
             
 
+if __name__ == "__main__":
+   table = Custom_body_1()
+   
+   #print(table.genome[:,0])
+   #print(table.springs[0].center)
 
 # %%
 lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0])
-for mass in lattice.masses:
-    print(mass.p)
+print(lattice.genome)
+
 

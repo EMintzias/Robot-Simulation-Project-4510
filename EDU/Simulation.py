@@ -14,6 +14,7 @@ class Simulate:
         self.G  = np.array([0, 0, -9.81])  # Gravity
         self.dt = 0.000075  # Time-step
         self.T  = 0  # Global time variable
+        self.omega = 2*np.pi
         self.global_step = 0
         self.sixty_Hz = int(0.01666 / self.dt) # dynamic plotting for 60 FPS 
         self.four_Hz = int(.25 / self.dt)
@@ -151,10 +152,12 @@ class Simulate:
         for spring in mass.springs:
             # If spring connected to that mass
             if spring.m1 == mass or spring.m2 == mass:
-                # Calculate spring force
+                # Calculate spring force and actuator length based on time
                 L = np.linalg.norm(spring.m1.p - spring.m2.p)
-                # Update F_spring in the vector direction from m2 to m1
-                F_spring = spring.k * (L - spring.L0) * (spring.m1.p - spring.m2.p) / L
+                Lo = spring.Lo*(1+spring.b * np.sin(self.omega*self.t))
+                # Update F_spring in the vector direction from m2 to m1 (unit vect (p1-p1)/dist)
+                F_spring = spring.k * (L - Lo) * (spring.m1.p - spring.m2.p) / L
+                
                 # Update F with appropriate sign
                 if spring.m1 == mass:
                     F -= F_spring
@@ -197,6 +200,35 @@ class Simulate:
                
         pass
     
+    def plot_frame(self): 
+        pygame.init()
+        #glutInit()
+        display = (800,600)
+        pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
+        gluPerspective(45, (display[0]/display[1]), 0.1, 100.0)
+        gluLookAt(-3.5, -3.5, 2.5, 0, 0, 0, 0, 0, 1)
+        glClearColor(0.53, 0.81, 0.98, 1)
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        return   
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        self.draw_ground()
+        self.draw_cube()
+        
+        # Render the text in the top-right corner using GLUT
+        text_string = f"Time: {self.T:.2f} seconds"
+        #self.render_text(0.6, 0.9, text_string)
+        
+        pygame.display.flip()
+        #pygame.time.wait(10)      
+        
+        
+        
+# 10S simulation #
     def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False): 
 
         if Plot:
@@ -266,7 +298,6 @@ class Simulate:
                 if self.T> 10:
                     break
     
-    
         #desired output       
         return None
             
@@ -274,8 +305,10 @@ class Simulate:
 
 
 if __name__ == "__main__":
-    lattice = CubeLattice(lattice_size=1, k_value=9000, p_0 = [0,0,0.9])
-    sim1 = Simulate(body = lattice)
-    sim1.run_simulation(Plot = True)
+    BODY = Custom_body_1(k_value=9000, p_0 = [0,0,0.9])
+    sim1 = Simulate(body = BODY)
+    sim1.run_simulation(Plot=True)
     #cProfile.run('main(cubes)', 'profiling.out')
     print('done')
+
+# %%

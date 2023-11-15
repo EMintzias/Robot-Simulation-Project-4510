@@ -135,6 +135,9 @@ out = np.vstack((fvf,leg1,leg2,leg3,leg4)).astype(int)
 
 print(out.size)
 print(out*.1)
+#%%
+x,y,z = out[5]
+print(x,y,z,'=', out[5])
 
 
 #%%
@@ -142,4 +145,33 @@ file_path = "table_body.txt"
 
 # Save the NumPy array to a text file
 np.savetxt(file_path, out, fmt='%d', delimiter=',')
+# %%
+import numpy as np
+
+
+points = np.genfromtxt("table_body.txt", delimiter=',')
+
+rnd_ind = np.random.choice(points.shape[0], size=5, replace=False)
+rnd_points = points[rnd_ind]
+print(rnd_points)
+for pt in rnd_points:
+    print(pt)
+out = [ (pt , np.random.choice([1,2,3,4])) for pt in rnd_points ]
+
+print(out[0])
+#%%
+import numpy as np
+
+# Create a 2D NumPy array (example data)
+vertex = np.array([2, 3, 4])  # Example vertex
+data = np.array([[1, 2, 3],
+                 [4, 5, 6],
+                 [7, 8, 9]])
+
+# Subtract the vertex from each row in the array
+result = data - vertex
+
+print("Result:")
+print(result)
+
 # %%

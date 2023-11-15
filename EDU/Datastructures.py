@@ -96,6 +96,7 @@ class CubeLattice:
                                 mass2.add_spring(spring)
         self.springs = springs 
         self.COM_update()
+        self.fitness = 1e-7
         
     def COM_update(self):
         rslt = np.zeros(3)
@@ -105,12 +106,41 @@ class CubeLattice:
             total_mass += mass.m
         self.COM = rslt/total_mass
         return rslt/total_mass
-            
+
+
+class Custom_body_1:
+    def __init__(self) -> None:
+        self.fitness = 1e-7
+        self.genome = np.ones(5)
+
+        points = np.genfromtxt("table_body.txt", delimiter=',')
+        self.masses = np.zeros((len(points),3))
+        
+        for i in range(points.size):
+            self.masses[i] = 
+        
+        
+        self.COM_update()
+        
+        
+    def COM_update(self):
+        rslt = np.zeros(3)
+        total_mass = 0
+        for mass in self.masses:
+            rslt  += mass.p * mass.m
+            total_mass += mass.m
+        self.COM = rslt/total_mass
+        return rslt/total_mass   
+        
+        
+        
+        
+        pass
             
 
 
 # %%
 lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0])
-com = lattice.COM
-print(com)
+for mass in lattice.masses:
+    print(mass.p)
 

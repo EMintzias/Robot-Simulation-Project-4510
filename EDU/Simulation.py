@@ -182,11 +182,11 @@ class Simulate:
         self.global_step +=1
         pass
     
-    def evaluate(self):
-        COM = self.body.COM_update()
+    def evaluate(self, T = .05):
+        dist = np.linalg.norm(self.Initial_pos0 - self.body.COM_update())
+        return dist
         
 
-        VC
     
     def print_update(self):
         out = f'Time = {round(self.T,2)}  |  '
@@ -262,8 +262,6 @@ class Simulate:
                 
                 if Verbose and (self.global_step % self.four_Hz == 1):
                      self.print_update()
-                    
-                
                 
                 if self.T> 10:
                     break

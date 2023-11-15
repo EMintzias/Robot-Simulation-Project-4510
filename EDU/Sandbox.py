@@ -92,11 +92,54 @@ mu_k = 0.7 # Kinetic coefficient of friction
                     F_friction = -kinetic_friction_magnitude * (F_P / np.linalg.norm(F_P))
                     F += F_friction
 # %%
-
+import numpy as np
 # throwing cube with slight spin
-for i, mass in enumerate(cube.masses):
-            if i == 4 and T == 0:
-                F = np.array([0,200,0.])
-            else:
-                # Initial force is 0
-                F = np.zeros(3)
+#data = np.genfromtxt("Table_Body_points.txt", delimiter=',')
+#print(data)
+
+fbyf_4 = np.zeros((36,3))
+fbyf_5 = np.zeros((36,3))
+
+c=0
+for i in range(6):
+    for j in range(6):
+        fbyf_4[c] = [i,j,3]
+        fbyf_5[c] = [i,j,4]
+        c+=1
+        pass
+    
+    
+fvf = np.vstack((fbyf_4,fbyf_5)).astype(int)
+
+print('----------table top-------------')
+
+leg1 = np.array([[0,0,0],
+                [1,0,0],
+                [0,1,0],
+                [1,1,0],
+                [0,0,1],
+                [1,0,1],
+                [0,1,1],
+                [1,1,1],
+                [0,0,2],
+                [1,0,2],
+                [0,1,2],
+                [1,1,2],
+                ])
+#print(leg)
+leg2 = leg1 + [4,0,0]
+leg3 = leg1 + [0,4,0]
+leg4 = leg1 + [4,4,0]
+
+out = np.vstack((fvf,leg1,leg2,leg3,leg4)).astype(int)
+
+print(out.size)
+print(out*.1)
+
+
+#%%
+file_path = "table_body.txt"
+
+# Save the NumPy array to a text file
+np.savetxt(file_path, out, fmt='%d', delimiter=',')
+# %%

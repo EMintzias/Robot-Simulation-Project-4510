@@ -7,11 +7,12 @@ class Simulate:
     def __init__(self, body) -> None:
         self.body = body
         self.Initial_pos = body.COM
-        
         #GVLs
         self.b  = 0.999 # Dampening constant
         self.Kc = 100000  # Ground force constant
         self.G  = np.array([0, 0, -9.81])  # Gravity
+        self.mu_s = 0.90 # Static friction
+        self.mu_k = 0.68 # Kinetic friction
         self.dt = 0.000075  # Time-step
         self.T  = 0  # Global time variable
         self.omega = 2*np.pi
@@ -20,13 +21,10 @@ class Simulate:
         self.four_Hz = int(.25 / self.dt)
     
     #######################  PLOTTING METHODS ######################################
-    
-    
     def draw_cube_faces(self):
         base_color = (0/255, 120/255, 200/255)  # Blue color
         border_color = (0, 0, 0)  # Black color for the border
         border_width = 1  # Width of the border
-
         for i, face in enumerate(self.body.faces):
             # Draw face
             glBegin(GL_QUADS)
@@ -45,11 +43,10 @@ class Simulate:
             glEnd()
     
     def draw_masses_and_springs(self):
-        mass_color = (1, 0, 0)  # Red color for masses
-        spring_color = (0, 1, 0)  # Green color for springs
+        mass_color = (0, 0, 0)
+        spring_color = {1:(232/255, 177/255, 155/255), 2:(206/255, 222/255, 220/255), 3:(1, 0, 0), 4:(0, 0, 1)}  # Color springs for different types
         mass_size = 5  # Size of the mass points
         spring_width = 1  # Width of the springs
-
         # Draw masses
         glPointSize(mass_size)
         glColor3fv(mass_color)
@@ -57,26 +54,21 @@ class Simulate:
         for mass in self.body.masses:
             glVertex3fv(mass.p)
         glEnd()
-
         # Draw springs
         glLineWidth(spring_width)
-        glColor3fv(spring_color)
         glBegin(GL_LINES)
         for spring in self.body.springs:
+            glColor3fv(spring_color[spring.tissue_type])
             glVertex3fv(spring.m1.p)
             glVertex3fv(spring.m2.p)
         glEnd()
-        
-        pass
     
     def draw_shadow(self):
         shadow_color = (0.2, 0.2, 0.2)  # Dark gray color for shadow
         spring_shadow_width = 1  # Width of the spring shadows
-
         # Set the color and line width for the shadows
         glColor3fv(shadow_color)
         glLineWidth(spring_shadow_width)
-
         # Draw shadows of the springs
         glBegin(GL_LINES)
         for spring in self.body.springs:
@@ -84,15 +76,12 @@ class Simulate:
             glVertex3f(spring.m1.p[0], spring.m1.p[1], -0.001)
             glVertex3f(spring.m2.p[0], spring.m2.p[1], -0.001)
         glEnd()
-        
-        pass
     
     def draw_ground(self):
         dark_grey = (0.4, 0.4, 0.4)  # Dark grey color
         light_grey = (0.6, 0.6, 0.6)  # Lighter grey color
         side_length = 1  # Length of the side of each square
-        num_squares = 3  # Number of squares in each row and column
-
+        num_squares = 4  # Number of squares in each row and column
         glBegin(GL_QUADS)
         for i in range(num_squares):
             for j in range(num_squares):
@@ -101,13 +90,11 @@ class Simulate:
                     glColor3fv(light_grey)
                 else:
                     glColor3fv(dark_grey)
-
                 # Calculate the coordinates of the square
                 x1 = i * side_length - 1.45
                 y1 = j * side_length - 1.45
                 x2 = x1 + side_length
                 y2 = y1 + side_length
-
                 # Draw the square
                 glVertex3f(x1, y1, -0.005)
                 glVertex3f(x2, y1, -0.005)
@@ -138,10 +125,9 @@ class Simulate:
         # Then draw the cube's faces
         #draw_cube_faces(self.body)
         self.draw_masses_and_springs()
-        
-        pass
     
     ########################### RUN METHODS #######################################
+    # TODO run faster!
     def update_mass(self, mass):
         # Initial force is 0
         # GRAVITATIONAL FORCE
@@ -154,7 +140,7 @@ class Simulate:
             if spring.m1 == mass or spring.m2 == mass:
                 # Calculate spring force and actuator length based on time
                 L = np.linalg.norm(spring.m1.p - spring.m2.p)
-                Lo = spring.Lo*(1+spring.b * np.sin(self.omega*self.t))
+                Lo = spring.L0*(1+spring.b * np.sin(self.omega*self.T + spring.c))
                 # Update F_spring in the vector direction from m2 to m1 (unit vect (p1-p1)/dist)
                 F_spring = spring.k * (L - Lo) * (spring.m1.p - spring.m2.p) / L
                 
@@ -163,6 +149,15 @@ class Simulate:
                     F -= F_spring
                 else:
                     F += F_spring
+        # FRICTION FORCE
+        if mass.p[2] <= 0:
+            Fp = [F[0], F[1], 0]
+            Fn = [0, 0, F[2]]
+            if np.linalg.norm(Fp) < np.linalg.norm(Fn)*self.mu_s:
+                F -= Fp
+            else:
+                F += Fp/np.linalg.norm(Fp)*(-1)*np.linalg.norm(Fn)*self.mu_k
+
         # GROUND COLLISION FORCE
         # Ground collision check and response
         if mass.p[2] < 0:
@@ -188,17 +183,12 @@ class Simulate:
     def evaluate(self, T = .05):
         dist = np.linalg.norm(self.Initial_pos0 - self.body.COM_update())
         return dist
-        
-
     
     def print_update(self):
         out = f'Time = {round(self.T,2)}  |  '
         out+= f'Position  = {np.round(self.body.masses[0].p,2)}  |  '
         out+= f'Vel  = {np.round(self.body.masses[0].v,2)}  |  '
-        
         print(out)
-               
-        pass
     
     def plot_frame(self): 
         pygame.init()
@@ -221,14 +211,11 @@ class Simulate:
         
         # Render the text in the top-right corner using GLUT
         text_string = f"Time: {self.T:.2f} seconds"
-        #self.render_text(0.6, 0.9, text_string)
+        self.render_text(0.6, 0.9, text_string)
         
         pygame.display.flip()
         #pygame.time.wait(10)      
-        
-        
-        
-# 10S simulation #
+    
     def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False): 
 
         if Plot:
@@ -237,7 +224,7 @@ class Simulate:
             display = (800,600)
             pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
             gluPerspective(45, (display[0]/display[1]), 0.1, 100.0)
-            gluLookAt(-3.5, -3.5, 2.5, 0, 0, 0, 0, 0, 1)
+            gluLookAt(-2., -2., 1.5, 0, 0, 0, 0, 0, 1)
             glClearColor(0.53, 0.81, 0.98, 1)
             glDisable(GL_CULL_FACE)
             glEnable(GL_DEPTH_TEST)
@@ -245,42 +232,26 @@ class Simulate:
             while True:
                 #___________SIMULATION _________
                 # Loop over all masses and update them, advance simulation one step
+                #start_time = time.time()
                 self.Body_Advance_step()
+                #print(f"Running {len(self.body.springs)/(time.time() - start_time):.6f} springs/sec")
 
-                #print(f"Each update loop takes {time.time() - start_time:.6f} seconds")
-
-                
-                
                 # _________PLOTING_________
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         return
                 
-                # BREATHING CUBE
-                #TODO
-                if Actuator_on:
-                    for cube in cubes:
-                        for spring in cube.springs:
-                            spring.L0 += 0.00005*np.sin(self.global_step*0.001)
-
-                start_time = time.time()
-                
-                
-            
-                if self.global_step % 200 == 1:
-
+                # _________RENDERING_________
+                if self.global_step % 100 == 1:
                     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
                     self.draw_ground()
                     self.draw_cube()
-                    
                     # Render the text in the top-right corner using GLUT
                     text_string = f"Time: {self.T:.2f} seconds"
-                    #self.render_text(0.6, 0.9, text_string)
-                    
+                    self.render_text(0.6, 0.9, text_string)
                     pygame.display.flip()
-                    #pygame.time.wait(10)      
-                    
+                    #pygame.time.wait(10)
                 if self.T> 10:
                     print(self.T)
                     break 
@@ -305,7 +276,8 @@ class Simulate:
 
 
 if __name__ == "__main__":
-    BODY = Custom_body_1(k_value=9000, p_0 = [0,0,0.9])
+    BODY =  Custom_body_1(k_value=9000, p_0 = [0,0,0.])
+    print(len(BODY.springs))
     sim1 = Simulate(body = BODY)
     sim1.run_simulation(Plot=True)
     #cProfile.run('main(cubes)', 'profiling.out')

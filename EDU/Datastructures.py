@@ -22,9 +22,10 @@ class Spring:
         self.L0 = np.linalg.norm(m1.p - m2.p)
         self.center = (m1.p+m2.p) /2
         
-        self.k = k   
-        self.b = 0    
-        self.c = 0 
+        self.tissue_type = None
+        self.k = k
+        self.b = 0
+        self.c = 0
         
     def update_center(self):
         self.center = (self.m1.p+self.m2.p)/2   
@@ -124,7 +125,8 @@ class Custom_body_1:
         self.fitness = 1e-7
         
         # maps to properties (k,b,c)
-        self.tissue_dict = {1:(1000,0,0), 2:(20000,0,0), 3:(5000,.25,0), 4:(5000,0,np.pi)}
+        self.tissue_dict = {1:(1000,0,0), 2:(20000,0,0), 3:(5000,.125,0), 4:(5000,-.125,0)}
+        self.reverse_tissue_dict = {value: key for key, value in self.tissue_dict.items()}
 
         points = np.genfromtxt("table_body.txt", delimiter=',')
         #self.masses = np.zeros((len(points),3))
@@ -177,17 +179,17 @@ class Custom_body_1:
             dist = [np.linalg.norm(s.center - g_pt) for g_pt in self.genome[:,0]]
             min_ind = np.argmin(dist)
             s.k,s.b,s.c = self.genome[min_ind,1]
+            s.tissue_type = self.reverse_tissue_dict[tuple(self.genome[min_ind,1])]
             pass
             
 
 if __name__ == "__main__":
    table = Custom_body_1()
-   
-   #print(table.genome[:,0])
+   #print(table.reverse_tissue_dict)
    #print(table.springs[0].center)
 
 # %%
-lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0])
-print(lattice.genome)
+#lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0])
+#print(lattice.genome)
 
 

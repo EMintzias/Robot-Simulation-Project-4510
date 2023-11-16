@@ -4,7 +4,7 @@ from Datastructures import *
 
 #%%
 class Simulate:
-    def __init__(self, body) -> None:
+    def __init__(self, body):
         self.body = body
         self.Initial_pos = body.COM
         #GVLs
@@ -13,7 +13,7 @@ class Simulate:
         self.G  = np.array([0, 0, -9.81])  # Gravity
         self.mu_s = 0.89 # Static friction
         self.mu_k = 0.70 # Kinetic friction
-        self.dt = 0.000075  # Time-step
+        self.dt = 0.00007  # Time-step
         self.T  = 0  # Global time variable
         self.omega = 2*np.pi
         self.global_step = 0
@@ -181,13 +181,13 @@ class Simulate:
         pass
     
     def evaluate(self, T = .05):
-        dist = np.linalg.norm(self.Initial_pos0 - self.body.COM_update())
+        dist = np.linalg.norm(self.Initial_pos - self.body.COM_update())
         return dist
     
     def print_update(self):
         out = f'Time = {round(self.T,2)}  |  '
-        out+= f'Position  = {np.round(self.body.masses[0].p,2)}  |  '
-        out+= f'Vel  = {np.round(self.body.masses[0].v,2)}  |  '
+        out+= f'Position  = {np.round(self.body.masses[72].p,2)}  |  '
+        out+= f'Vel  = {np.round(self.body.masses[72].v,2)}  |  '
         print(out)
     
     def plot_frame(self): 
@@ -216,7 +216,7 @@ class Simulate:
         pygame.display.flip()
         #pygame.time.wait(10)      
     
-    def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False): 
+    def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False, max_T = 1): 
 
         if Plot:
             start_time = time.time()
@@ -253,7 +253,7 @@ class Simulate:
                     self.render_text(0.6, 0.9, text_string)
                     pygame.display.flip()
                     #pygame.time.wait(10)
-                if self.T> 10:
+                if self.T> max_T:
                     print(self.T)
                     print(f"Took {(time.time() - start_time):.6f} sec for {self.T} sec in sim")
                     break 
@@ -265,24 +265,26 @@ class Simulate:
             while True: 
                 self.Body_Advance_step()
                 
-                if Verbose and (self.global_step % self.four_Hz == 1):
+                if Verbose and (self.global_step % self.sixty_Hz == 1):
                      self.print_update()
                 
-                if self.T> 1:
+                if self.T> max_T:
                     print(f"Took {(time.time() - start_time):.6f} sec for {self.T} sec in sim")
                     break
         #desired output       
-        return None
+        return self.evaluate()
             
 
 
 
 if __name__ == "__main__":
     BODY =  Custom_body_1(k_value=9000, p_0 = [0,0,0.])
+    #BODY = CubeLattice(p_0 = [0,0,0.9])
     #print(len(BODY.springs))
     sim1 = Simulate(body = BODY)
-    sim1.run_simulation(Plot=True)
+    fitness = sim1.run_simulation(Plot = False, Verbose = True, max_T = 2)
     #cProfile.run('main(cubes)', 'profiling.out')
+    print(fitness)
     print('done')
 
 # %%

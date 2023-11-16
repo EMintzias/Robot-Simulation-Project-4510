@@ -1,5 +1,6 @@
 # %%
 from Libraries import *
+from dtypes import *
 
 #%%
 # Mass class
@@ -30,7 +31,53 @@ class Spring:
     def update_center(self):
         self.center = (self.m1.p+self.m2.p)/2   
 
-        
+
+
+
+class Cube_jit:
+    def __init__(self, cube_size=0.1, p_0=np.array([0, 0, 1]), mass_value=0.1, k_value=10000):
+        # Initialize vertices
+        vertices = [
+            np.array([0, 0, 0.]) * cube_size, np.array([1, 0, 0.]) * cube_size,
+            np.array([0, 1, 0.]) * cube_size, np.array([1, 1, 0.]) * cube_size,
+            np.array([0, 0, 1.]) * cube_size, np.array([1, 0, 1.]) * cube_size,
+            np.array([0, 1, 1.]) * cube_size, np.array([1, 1, 1.]) * cube_size
+        ]
+
+        # Initialize masses and springs arrays
+        self.masses = np.zeros(len(vertices), dtype=mass_dtype)
+        for i, v in enumerate(vertices):
+            self.masses[i]['m'] = mass_value
+            self.masses[i]['p'] = v + p_0
+            self.masses[i]['v'] = np.zeros(3, dtype=np.float64)
+            self.masses[i]['a'] = np.zeros(3, dtype=np.float64)
+
+        # Initialize springs
+        # Assuming self.springs will be populated with appropriate logic
+        self.springs = np.zeros(0, dtype=spring_dtype)  # Replace NUM_SPRINGS with actual count
+
+        # Populate springs array
+        # ...
+
+        # Initialize faces for PyOpenGL plotting - this will need to be adjusted if using NumPy arrays
+        self.faces = [
+            [self.masses[i] for i in [0, 1, 3, 2]],
+            [self.masses[i] for i in [4, 5, 7, 6]],
+            [self.masses[i] for i in [0, 4, 6, 2]],
+            [self.masses[i] for i in [1, 5, 7, 3]],
+            [self.masses[i] for i in [0, 1, 5, 4]],
+            [self.masses[i] for i in [2, 3, 7, 6]]
+        ]
+
+        # Compute the center of mass
+        self.COM_update()
+
+    def COM_update(self):
+        total_mass = np.sum(self.masses['m'])
+        weighted_positions = self.masses['p'].T * self.masses['m']
+        self.COM = np.sum(weighted_positions, axis=1) / total_mass
+
+
 
 # Cube class
 class Cube:

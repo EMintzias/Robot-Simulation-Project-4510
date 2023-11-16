@@ -1,6 +1,7 @@
 #%%
 from Libraries import *
 from Datastructures import *
+from dtypes import *
 
 #%%
 class Simulate:
@@ -19,6 +20,10 @@ class Simulate:
         self.global_step = 0
         self.sixty_Hz = int(0.01666 / self.dt) # dynamic plotting for 60 FPS 
         self.four_Hz = int(.25 / self.dt)
+
+        # numpy arrays of useful info to optimize
+        self.masses_np = np.empty(len(self.body.masses), dtype=mass_dtype)
+        self.springs_np = np.empty(len(self.body.springs), dtype=spring_dtype)
     
     #######################  PLOTTING METHODS ######################################
     def draw_cube_faces(self):
@@ -132,7 +137,7 @@ class Simulate:
         # Initial force is 0
         # GRAVITATIONAL FORCE
         # Update F
-        F = mass.m * self.G
+        F = mass['m'] * self.G
         # SPRING FORCE
         # Loop over all springs
         for spring in mass.springs:
@@ -171,15 +176,40 @@ class Simulate:
         mass.p += mass.v * self.dt
         return mass
     
+    def obj_2_array(mass, dtype):
+        # Create a NumPy array of the specified dtype with one element
+        structured_mass = np.zeros(1, dtype=dtype)
+        # Assign values from the Mass object to the structured array
+        structured_mass['m'] = mass.m
+        structured_mass['p'] = mass.p
+        structured_mass['v'] = mass.v
+        structured_mass['a'] = mass.a
+        return structured_mass
+    
+    def array_2_obj(mass, structured_mass):
+        # Update the Mass object attributes with values from the structured array
+        mass.m = structured_mass['m']
+        mass.p = structured_mass['p']
+        mass.v = structured_mass['v']
+        mass.a = structured_mass['a']
+
     def Body_Advance_step(self):
-        #Update masses
-        self.body.masses = [self.update_mass(mass) for mass in self.body.masses]
-        
-        #update simulation
+        # Object 2 Array values
+        for i, mass in enumerate(self.body.masses):
+            self.masses_np[i] = obj_2_array(mass, self.mass_dtype)
+            pass
+        for i, spring in enumerate(self.body.springs):
+            self.springs_np[i] = obj_2_array
+        # Update mass values
+        self.masses_np = [self.update_mass(mass) for mass in self.masses_np]
+        # Update object values
+        for i, mass in enumerate(self.body.masses):
+            array_2_obj(mass, self.masses_np[i])
+        # Update simulation
         self.T+=self.dt
         self.global_step +=1
         pass
-    
+
     def evaluate(self, T = .05):
         dist = np.linalg.norm(self.Initial_pos0 - self.body.COM_update())
         return dist
@@ -253,7 +283,7 @@ class Simulate:
                     self.render_text(0.6, 0.9, text_string)
                     pygame.display.flip()
                     #pygame.time.wait(10)
-                if self.T> 10:
+                if self.T> 0.02:
                     print(self.T)
                     print(f"Took {(time.time() - start_time):.6f} sec for {self.T} sec in sim")
                     break 
@@ -268,7 +298,7 @@ class Simulate:
                 if Verbose and (self.global_step % self.four_Hz == 1):
                      self.print_update()
                 
-                if self.T> 1:
+                if self.T> 0.1:
                     print(f"Took {(time.time() - start_time):.6f} sec for {self.T} sec in sim")
                     break
         #desired output       
@@ -279,10 +309,11 @@ class Simulate:
 
 if __name__ == "__main__":
     BODY =  Custom_body_1(k_value=9000, p_0 = [0,0,0.])
+    #BODY = Cube(p_0=[0, 0, 0.0])
     #print(len(BODY.springs))
     sim1 = Simulate(body = BODY)
-    sim1.run_simulation(Plot=True)
-    #cProfile.run('main(cubes)', 'profiling.out')
+    #sim1.run_simulation(Plot=False)
+    cProfile.run('sim1.run_simulation(Plot=True)', 'profiling_plot.out')
     print('done')
 
 # %%

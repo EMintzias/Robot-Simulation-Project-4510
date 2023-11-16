@@ -26,6 +26,10 @@ b = 0.999 # Dampening constant
 # Initialize lattice
 lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0.9])
 
+for i in lattice.masses:
+    print(len(i.springs))
+
+
 def draw_cube_faces(cube):
     base_color = (0/255, 120/255, 200/255)  # Blue color
     border_color = (0, 0, 0)  # Black color for the border

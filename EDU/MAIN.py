@@ -26,7 +26,7 @@ class EvolvingGait:
         
     def update_pop_fitness(self):
         for i in tqdm(len(self.pop_size), desc='Evaluating:'):
-            self.fitnesses[i] = Simulate(body=self.population[i]).run_simulation(Plot=False, max_T=2)
+            self.fitnesses[i] = Simulate(body=self.population[i]).run_simulation(Plot=False, max_T=0.01)
 
     def fitness_prop_selection(self):
         pass

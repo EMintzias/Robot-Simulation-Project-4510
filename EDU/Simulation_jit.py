@@ -14,7 +14,7 @@ class Simulate:
         self.G  = np.array([0, 0, -9.81])  # Gravity
         self.mu_s = 0.89 # Static friction
         self.mu_k = 0.70 # Kinetic friction
-        self.dt = 0.000075  # Time-step
+        self.dt = 0.00007  # Time-step
         self.T  = 0  # Global time variable
         self.omega = 2*np.pi
         self.global_step = 0
@@ -199,7 +199,7 @@ class Simulate:
             self.masses_np[i] = obj_2_array(mass, self.mass_dtype)
             pass
         for i, spring in enumerate(self.body.springs):
-            self.springs_np[i] = obj_2_array
+            self.springs_np[i] = obj_2_array(spring, self.spring_dtype)
         # Update mass values
         self.masses_np = [self.update_mass(mass) for mass in self.masses_np]
         # Update object values

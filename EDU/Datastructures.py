@@ -16,13 +16,13 @@ class Mass:
 
 # Spring class
 class Spring:
-    def __init__(self, m1, m2, k):
+    def __init__(self, m1, m2, k, tissue_type = None):
         self.m1 = m1
         self.m2 = m2
         self.L0 = np.linalg.norm(m1.p - m2.p)
         self.center = (m1.p+m2.p) /2
         
-        self.tissue_type = None
+        self.tissue_type = tissue_type
         self.k = k
         self.b = 0
         self.c = 0
@@ -50,7 +50,7 @@ class Cube:
         self.springs = []
         for i, m1 in enumerate(self.masses):
             for j, m2 in enumerate(self.masses[i + 1:]):
-                spring = Spring(m1, m2, k_value)
+                spring = Spring(m1, m2, k_value, tissue_type = 1)
                 self.springs.append(spring)
                 m1.add_spring(spring)
                 m2.add_spring(spring)

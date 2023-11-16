@@ -11,8 +11,8 @@ class Simulate:
         self.b  = 0.999 # Dampening constant
         self.Kc = 100000  # Ground force constant
         self.G  = np.array([0, 0, -9.81])  # Gravity
-        self.mu_s = 0.90 # Static friction
-        self.mu_k = 0.68 # Kinetic friction
+        self.mu_s = 0.89 # Static friction
+        self.mu_k = 0.70 # Kinetic friction
         self.dt = 0.000075  # Time-step
         self.T  = 0  # Global time variable
         self.omega = 2*np.pi
@@ -157,11 +157,11 @@ class Simulate:
                 F -= Fp
             else:
                 F += Fp/np.linalg.norm(Fp)*(-1)*np.linalg.norm(Fn)*self.mu_k
-
         # GROUND COLLISION FORCE
         # Ground collision check and response
         if mass.p[2] < 0:
             F += np.array([0, 0, -self.Kc * mass.p[2]])
+        
         # UPDATE ACCELERATION
         mass.a = F / mass.m
         # UPDATE VELOCITY
@@ -252,7 +252,7 @@ class Simulate:
                     self.render_text(0.6, 0.9, text_string)
                     pygame.display.flip()
                     #pygame.time.wait(10)
-                if self.T> 10:
+                if self.T> 20:
                     print(self.T)
                     break 
         
@@ -276,7 +276,8 @@ class Simulate:
 
 
 if __name__ == "__main__":
-    BODY =  Custom_body_1(k_value=9000, p_0 = [0,0,0.])
+    #BODY =  Custom_body_1(k_value=9000, p_0 = [0,0,0.])
+    BODY = Cube(p_0=[0, 0, 0.0])
     print(len(BODY.springs))
     sim1 = Simulate(body = BODY)
     sim1.run_simulation(Plot=True)

@@ -1,7 +1,7 @@
 #%%
-from Libraries import *
-from Datastructures import *
-from Simulation import Simulate
+from Libraries_cloud import *
+from Datastructures_cloud import *
+from Simulation_cloud import *
 
 #%%
 class EvolvingGait:
@@ -14,7 +14,7 @@ class EvolvingGait:
         self.update_pop_fitness()
 
         if Random_Search:
-            pass
+            self.random_search()
 
     # Populate with random bodies
     def random_population(self):
@@ -26,7 +26,7 @@ class EvolvingGait:
         
     def update_pop_fitness(self):
         for i in tqdm(len(self.pop_size), desc='Evaluating:'):
-            self.fitnesses[i] = Simulate(body=self.population[i]).run_simulation(Plot=False, max_T=0.01)
+            self.fitnesses[i] = Simulate(body=self.population[i]).run_simulation(Plot=False, max_T=2)
 
     def fitness_prop_selection(self):
         pass
@@ -37,10 +37,13 @@ class EvolvingGait:
     def crossover(self):
         pass
 
+    def random_search(self):
+        return self.population
+
 
 if __name__ == "__main__":
     
-    population = EvolvingGait(pop_size = 10000, Random_Search = True)
+    population = EvolvingGait(pop_size = 60, Random_Search = True)
     
     filename = '{}_random_search.pkl'.format(time.time())
     with open(filename, 'wb') as file:

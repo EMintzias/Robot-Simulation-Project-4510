@@ -1,7 +1,7 @@
 #%%
 from Libraries import *
 from Datastructures import *
-
+from MAIN import *
 #%%
 class Simulate:
     def __init__(self, body):
@@ -278,11 +278,15 @@ class Simulate:
 
 
 if __name__ == "__main__":
+    with open('1700125297.249795_random_search.pkl', 'rb') as file:
+        data = pickle.load(file)
+    print(data)
     BODY =  Custom_body_1(k_value=9000, p_0 = [0,0,0.])
+    BODY = data[0][0]
     #BODY = CubeLattice(p_0 = [0,0,0.9])
     #print(len(BODY.springs))
     sim1 = Simulate(body = BODY)
-    fitness = sim1.run_simulation(Plot = False, Verbose = True, max_T = 2)
+    fitness = sim1.run_simulation(Plot = True, Verbose = True, max_T = 2)
     #cProfile.run('main(cubes)', 'profiling.out')
     print(fitness)
     print('done')

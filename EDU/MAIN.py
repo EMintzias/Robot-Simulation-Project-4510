@@ -40,7 +40,7 @@ class EvolvingGait:
 
 if __name__ == "__main__":
     
-    t = EvolvingGait(pop_size = 60)
+    t = EvolvingGait(pop_size = 12)
     
     pop_n_fit = t.results()
 

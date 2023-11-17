@@ -161,6 +161,7 @@ class Custom_body_1:
         self.genome = np.array([[pt , self.tissue_dict[np.random.choice([1,2,3,4])]] for pt in genome_points ])
         self.COM_update()
         self.Update_springs()
+        print('fuck cloud')
         
         
     def COM_update(self):

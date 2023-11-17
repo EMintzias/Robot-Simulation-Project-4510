@@ -120,9 +120,9 @@ class CubeLattice:
 
 
 class Custom_body_1:
-    def __init__(self, cube_size=0.1,  mass_value=0.1, k_value=9000, p_0=np.dot([0, 0, 0], 0.0),
-                 Genome_size = 8) -> None:
+    def __init__(self, cube_size=0.1,  mass_value=0.1, k_value=9000, p_0=np.dot([0, 0, 0], 0.0), Genome_size = 8, prev_genome=None, only_bounce=False):
         self.fitness = 1e-7
+        self.only_bounce = only_bounce
         
         # maps to properties (k,b,c)
         self.tissue_dict = {1:(1000,0,0), 2:(20000,0,0), 3:(5000,.125,0), 4:(5000,-.125,0)}
@@ -157,10 +157,18 @@ class Custom_body_1:
         #Genome is a set of points with a corresponding tuple of properties (K,b,c)
         genome_points = [m.p for m in np.random.choice(self.masses, size=Genome_size, replace=False)]
 
+        if prev_genome is not None:
+            self.genome = prev_genome
+            for i in range(len(self.genome)):
+                self.genome[i][0] += p_0
+        else:
+            self.genome = np.array([[pt , self.tissue_dict[np.random.choice([1,2,3,4])]] for pt in genome_points ])
         
-        self.genome = np.array([[pt , self.tissue_dict[np.random.choice([1,2,3,4])]] for pt in genome_points ])
         self.COM_update()
         self.Update_springs()
+
+    def fuck_you(self):
+        print('fuck you')
         
         
     def COM_update(self):
@@ -174,12 +182,18 @@ class Custom_body_1:
     
     
     def Update_springs(self):
+        print('fuck')
         for s in self.springs:
             s.update_center() #should not be necessary since this is called after initialized but more robust here
             dist = [np.linalg.norm(s.center - g_pt) for g_pt in self.genome[:,0]]
             min_ind = np.argmin(dist)
-            s.k,s.b,s.c = self.genome[min_ind,1]
             s.tissue_type = self.reverse_tissue_dict[tuple(self.genome[min_ind,1])]
+            if self.only_bounce:
+                s.k,s.b,s.c = self.genome[min_ind,1][0], 0, self.genome[min_ind,1][1]
+                #s.b = 0
+            else:
+                s.k,s.b,s.c = self.genome[min_ind,1]
+            
             pass
             
 
@@ -192,4 +206,11 @@ if __name__ == "__main__":
 #lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0])
 #print(lattice.genome)
 
+genome = np.array([[[0.2, 0.4, 0.30000000000000004], [1000.0, 0.0, 0.0]], [[0.0, 0.2, 0.30000000000000004], [20000.0, 0.0, 0.0]], [[0.1, 0.30000000000000004, 0.4], [1000.0, 0.0, 0.0]], [[0.1, 0.0, 0.0], [20000.0, 0.0, 0.0]], [[0.4, 0.4, 0.2], [5000.0, -0.125, 0.0]], [[0.4, 0.5, 0.2], [20000.0, 0.0, 0.0]], [[0.4, 0.0, 0.0], [1000.0, 0.0, 0.0]], [[0.1, 0.2, 0.4], [5000.0, -0.125, 0.0]]])
 
+body = Custom_body_1(prev_genome = genome)
+
+
+
+
+# %%

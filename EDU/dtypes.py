@@ -9,6 +9,7 @@ mass_dtype = np.dtype([
             ('v', np.float64, (3,)),
             ('a', np.float64, (3,)),
             ('springs', np.int32, (26,))
+            ('springs_i', np.int32, (26,))
         ])
 
 # SPRING DTYPE

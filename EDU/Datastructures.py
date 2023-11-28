@@ -14,6 +14,7 @@ class Mass:
     def add_spring(self, spring):
         self.springs.append(spring)
 
+
 # Spring class
 class Spring:
     def __init__(self, m1, m2, k, tissue_type = None):
@@ -21,7 +22,6 @@ class Spring:
         self.m2 = m2
         self.L0 = np.linalg.norm(m1.p - m2.p)
         self.center = (m1.p+m2.p) /2
-        
         self.tissue_type = tissue_type
         self.k = k
         self.b = 0
@@ -248,7 +248,7 @@ class RandomBody:
         self.Update_springs()
         
     
-    def generate_points(self, num_points=120, x_range=[-5,5], y_range=[-5,5], z_range=[0,10]):
+    def generate_points(self, num_points=120, x_range=[0,5], y_range=[0,5], z_range=[0,5]):
         points = set()
         points.add((0, 0, 0))  # Start with the initial point
         while len(points) < num_points:
@@ -298,13 +298,13 @@ if __name__ == "__main__":
 #lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0])
 #print(lattice.genome)
 
-genome = np.array([[[0.2, 0.4, 0.30000000000000004], [1000.0, 0.0, 0.0]], [[0.0, 0.2, 0.30000000000000004], [20000.0, 0.0, 0.0]], [[0.1, 0.30000000000000004, 0.4], [1000.0, 0.0, 0.0]], [[0.1, 0.0, 0.0], [20000.0, 0.0, 0.0]], [[0.4, 0.4, 0.2], [5000.0, -0.125, 0.0]], [[0.4, 0.5, 0.2], [20000.0, 0.0, 0.0]], [[0.4, 0.0, 0.0], [1000.0, 0.0, 0.0]], [[0.1, 0.2, 0.4], [5000.0, -0.125, 0.0]]])
+#genome = np.array([[[0.2, 0.4, 0.30000000000000004], [1000.0, 0.0, 0.0]], [[0.0, 0.2, 0.30000000000000004], [20000.0, 0.0, 0.0]], [[0.1, 0.30000000000000004, 0.4], [1000.0, 0.0, 0.0]], [[0.1, 0.0, 0.0], [20000.0, 0.0, 0.0]], [[0.4, 0.4, 0.2], [5000.0, -0.125, 0.0]], [[0.4, 0.5, 0.2], [20000.0, 0.0, 0.0]], [[0.4, 0.0, 0.0], [1000.0, 0.0, 0.0]], [[0.1, 0.2, 0.4], [5000.0, -0.125, 0.0]]])
 
-body = Custom_body_1(prev_genome = genome)
+#body = Custom_body_1(prev_genome = genome)
 
 
 
 
 # %%
-points = np.genfromtxt("table_body.txt", delimiter=',')
-# %%
+#points = np.genfromtxt("table_body.txt", delimiter=',')
+

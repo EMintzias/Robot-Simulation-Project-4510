@@ -1,7 +1,7 @@
 #%%
 from Libraries import *
 from Datastructures import *
-from dtypes import *
+from my_dtypes import *
 
 #%%
 class Simulate:
@@ -196,15 +196,15 @@ class Simulate:
     def Body_Advance_step(self):
         # Object 2 Array values
         for i, mass in enumerate(self.body.masses):
-            self.masses_np[i] = obj_2_array(mass, self.mass_dtype)
+            self.masses_np[i] = self.obj_2_array(mass, self.mass_dtype)
             pass
         for i, spring in enumerate(self.body.springs):
-            self.springs_np[i] = obj_2_array(spring, self.spring_dtype)
+            self.springs_np[i] = self.obj_2_array(spring, self.spring_dtype)
         # Update mass values
         self.masses_np = [self.update_mass(mass) for mass in self.masses_np]
         # Update object values
         for i, mass in enumerate(self.body.masses):
-            array_2_obj(mass, self.masses_np[i])
+            self.array_2_obj(mass, self.masses_np[i])
         # Update simulation
         self.T+=self.dt
         self.global_step +=1

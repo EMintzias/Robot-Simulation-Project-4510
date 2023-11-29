@@ -31,3 +31,4 @@ from OpenGL.GLU import *
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.animation import FuncAnimation
 from matplotlib.patches import Rectangle
+import pstats

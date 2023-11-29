@@ -1,8 +1,9 @@
 #%%
 from Libraries import *
-from Datastructures import RandomBody as custom
+from Datastructures import *
 from MAIN import *
 import pstats
+from my_dtypes import*
 #%%
 class Simulate:
     def __init__(self, body):
@@ -284,7 +285,8 @@ if __name__ == "__main__":
     #print(data[1])
     genome = data[0][5].genome
     #genome = data[0][0].genome
-    NEW_BODY = custom(only_bounce=True) #p_0=[0, 0, 0.7], prev_genome=np.array(genome), 
+    #NEW_BODY = RandomBody(only_bounce=True) #p_0=[0, 0, 0.7], prev_genome=np.array(genome), 
+    NEW_BODY = CubeLattice(lattice_size=2)
     sim1 = Simulate(body = NEW_BODY)
     
     
@@ -294,8 +296,8 @@ if __name__ == "__main__":
     
     
     profiler.disable()
-    stats = pstats.Stats(profiler).sort_stats('cumulative')
-    #stats.print_stats()
+    stats = pstats.Stats(profiler).sort_stats('tottime')
+    stats.print_stats()
     stats.dump_stats('profile_stats.prof')
     print('done')
 

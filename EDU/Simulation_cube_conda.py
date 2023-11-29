@@ -295,19 +295,9 @@ if __name__ == "__main__":
     
     profiler.disable()
     stats = pstats.Stats(profiler).sort_stats('cumulative')
-    stats.print_stats()
+    #stats.print_stats()
     stats.dump_stats('profile_stats.prof')
-    
-    #cProfile.run('main(cubes)', 'profiling.out')
-    #print(fitness)
     print('done')
 
 # %%
 
-
-stats = pstats.Stats('profiling.out')
-
-stats.sort_stats('cumulative')
-
-# Print out the stats
-stats.print_stats()

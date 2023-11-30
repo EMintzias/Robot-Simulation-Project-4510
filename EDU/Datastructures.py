@@ -198,7 +198,7 @@ class Custom_body_1:
 
 
 class RandomBody:
-    def __init__(self, cube_size=0.1,  mass_value=0.1, k_value=9000, p_0=np.dot([0, 0, 0], 0.0), Genome_size = 8, prev_genome=None, only_bounce=False):
+    def __init__(self, cube_size=0.1,  mass_value=0.1, k_value=9000, p_0=np.array([0,0,0]), Genome_size = 8, prev_genome=None, only_bounce=False):
         self.fitness = 1e-7
         self.only_bounce = only_bounce
         

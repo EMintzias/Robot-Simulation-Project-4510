@@ -128,6 +128,39 @@ class Simulate:
         #draw_cube_faces(self.body)
         self.draw_masses_and_springs()
     
+    
+    def print_update(self):
+        out = f'Time = {round(self.T,2)}  |  '
+        out+= f'Position  = {np.round(self.body.masses[72].p,2)}  |  '
+        out+= f'Vel  = {np.round(self.body.masses[72].v,2)}  |  '
+        print(out)
+    
+    def plot_frame(self): 
+        pygame.init()
+        #glutInit()
+        display = (800,600)
+        pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
+        gluPerspective(45, (display[0]/display[1]), 0.1, 100.0)
+        gluLookAt(-3.5, -3.5, 2.5, 0, 0, 0, 0, 0, 1)
+        glClearColor(0.53, 0.81, 0.98, 1)
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        return   
+
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        self.draw_ground()
+        self.draw_cube()
+        
+        # Render the text in the top-right corner using GLUT
+        text_string = f"Time: {self.T:.2f} seconds"
+        self.render_text(0.6, 0.9, text_string)
+        
+        pygame.display.flip()
+        #pygame.time.wait(10)  
+    
     ########################### RUN METHODS #######################################
     # TODO run faster!
     def update_mass(self, mass):
@@ -182,44 +215,162 @@ class Simulate:
         self.global_step +=1
         pass
     
+    
+    
+    def update_mass_git(self, mass_ind,mass):
+        # Initial force is 0
+        # GRAVITATIONAL FORCE
+        # Update F
+        F = mass.m * self.G
+        # SPRING FORCE
+        # Loop over all springs
+        for spring in mass.springs:
+            # If spring connected to that mass
+            if spring.m1 == mass or spring.m2 == mass:
+                # Calculate spring force and actuator length based on time
+                L = np.linalg.norm(spring.m1.p - spring.m2.p)
+                Lo = spring.L0*(1+spring.b * np.sin(self.omega*self.T + spring.c))
+                # Update F_spring in the vector direction from m2 to m1 (unit vect (p1-p1)/dist)
+                F_spring = spring.k * (L - Lo) * (spring.m1.p - spring.m2.p) / L
+                
+                # Update F with appropriate sign
+                if spring.m1 == mass:
+                    F -= F_spring
+                else:
+                    F += F_spring
+        # FRICTION FORCE
+        if mass.p[2] <= 0:
+            Fp = [F[0], F[1], 0]
+            Fn = [0, 0, F[2]]
+            if np.linalg.norm(Fp) < np.linalg.norm(Fn)*self.mu_s:
+                F -= Fp
+            else:
+                F += Fp/np.linalg.norm(Fp)*(-1)*np.linalg.norm(Fn)*self.mu_k
+        # GROUND COLLISION FORCE
+        # Ground collision check and response
+        if mass.p[2] < 0:
+            F += np.array([0, 0, -self.Kc * mass.p[2]])
+        
+        # UPDATE ACCELERATION
+        mass.a = F / mass.m
+        # UPDATE VELOCITY
+        mass.v += mass.a * self.dt
+        mass.v *= self.b # dampening
+        # UPDATE POSITION
+        mass.p += mass.v * self.dt
+        return mass
+    
+    
+    def Body_Advance_step_git(self,old_masses_arr,springs_arr):
+        #Update masses
+        #self.body.masses = [self.update_mass_git(mass) for mass in self.body.masses]
+        
+        #update simulation
+        new_masses = old_masses_arr.copy()
+        for mass_ind,mass in enumerate(new_masses): 
+            #masses_arr[mass_ind] = self.update_mass_git(mass_ind,mass)
+            #TODO make copy and work off of copy for updates
+            
+            # Initial force is 0
+            # GRAVITATIONAL FORCE
+            # Update F
+            F = mass['m'] * self.G
+            
+            # SPRING FORCE
+            # Loop over all springs
+            for s_ind,spring in enumerate(springs_arr):
+                # If spring connected to that mass
+                if spring['m1_ind']  == mass_ind or spring['m2_ind'] == mass_ind:
+                    # Calculate spring force and actuator length based on time
+                    M1,M2 = old_masses_arr[spring['m1_ind']], old_masses_arr[spring['m2_ind']] 
+                    
+                    L = np.linalg.norm(M1['p'] - M2['p'])
+                    Lo = spring['L0']*(1+spring['b'] * np.sin(self.omega*self.T + spring['c']))
+                    # Update F_spring in the vector direction from m2 to m1 (unit vect (p1-p1)/dist)
+                    F_spring = spring['k'] * (L - Lo) * (M1['p'] - M2['p']) / L
+                    
+                    # Update F with appropriate sign
+                    if spring['m1_ind']  == mass_ind:
+                        F -= F_spring
+                    else:
+                        F += F_spring
+            
+            # FRICTION FORCE
+            if mass['p'][2] <= 0:
+                Fp = [F[0], F[1], 0]
+                Fn = [0, 0, F[2]]
+                if np.linalg.norm(Fp) < np.linalg.norm(Fn)*self.mu_s:
+                    F -= Fp
+                else:
+                    F += Fp/np.linalg.norm(Fp)*(-1)*np.linalg.norm(Fn)*self.mu_k
+            
+            # GROUND COLLISION FORCE
+            # Ground collision check and response
+            if mass['p'][2] < 0:
+                F += np.array([0, 0, -self.Kc * mass['p'][2]])
+            
+            # UPDATE ACCELERATION
+            mass['a'] = F / mass['m']
+            # UPDATE VELOCITY
+            mass['v'] += mass['a'] * self.dt
+            mass['v'] *= self.b # dampening
+            # UPDATE POSITION
+            mass['p'] += mass['v'] * self.dt
+            
+            new_masses[mass_ind] = mass #i think this is redundant since it happened above?
+            
+            
+        
+        self.T+=self.dt
+        self.global_step +=1
+        #return new_masses_arr, new_springs_arr 
+        return new_masses, springs_arr
+    
+    def get_dtype_arrays(self):
+        masses_arr = np.empty(len(self.body.masses), dtype=mass_dtype)
+
+        for i,mass in enumerate(self.body.masses):
+            masses_arr[i]['m'] = mass.m
+            masses_arr[i]['p'] = mass.p
+            masses_arr[i]['v'] = mass.v
+            masses_arr[i]['a'] = mass.a
+
+        springs_arr = np.empty(len(self.body.springs), dtype=spring_dtype)
+        ind_arr = np.arange(len(self.body.masses))
+        
+        for i,spring  in enumerate(self.body.springs):
+            springs_arr[i]['k'] = spring.k
+            springs_arr[i]['b'] = spring.b
+            springs_arr[i]['c'] = spring.c
+            springs_arr[i]['L0'] = spring.L0
+            springs_arr[i]['m1_ind'] = ind_arr[[spring.m1 == mass for mass in self.body.masses]][0]
+            springs_arr[i]['m2_ind'] = ind_arr[[spring.m2 == mass for mass in self.body.masses]][0]
+            springs_arr[i]['center'] = spring.center
+            springs_arr[i]['tissue_type'] = spring.tissue_type
+        
+        #print(masses_arr, springs_arr)
+        return masses_arr, springs_arr
+    
+    def update_mass_obj(self,masses_arr):
+        for i,mass in enumerate(self.body.masses):
+            mass.m = masses_arr[i]['m']
+            mass.p = masses_arr[i]['p']
+            mass.v = masses_arr[i]['v']
+            mass.a = masses_arr[i]['a']
+
+        springs_arr = np.empty(len(self.body.springs), dtype=spring_dtype)
+        ind_arr = np.arange(len(self.body.masses))
+        
+    
     def evaluate(self, T = .05):
         dist = np.linalg.norm(self.Initial_pos - self.body.COM_update())
         return dist
     
-    def print_update(self):
-        out = f'Time = {round(self.T,2)}  |  '
-        out+= f'Position  = {np.round(self.body.masses[72].p,2)}  |  '
-        out+= f'Vel  = {np.round(self.body.masses[72].v,2)}  |  '
-        print(out)
     
-    def plot_frame(self): 
-        pygame.init()
-        #glutInit()
-        display = (800,600)
-        pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
-        gluPerspective(45, (display[0]/display[1]), 0.1, 100.0)
-        gluLookAt(-3.5, -3.5, 2.5, 0, 0, 0, 0, 0, 1)
-        glClearColor(0.53, 0.81, 0.98, 1)
-        glDisable(GL_CULL_FACE)
-        glEnable(GL_DEPTH_TEST)
-        for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-                        return   
-
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-        self.draw_ground()
-        self.draw_cube()
-        
-        # Render the text in the top-right corner using GLUT
-        text_string = f"Time: {self.T:.2f} seconds"
-        self.render_text(0.6, 0.9, text_string)
-        
-        pygame.display.flip()
-        #pygame.time.wait(10)      
     
     def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False, max_T = 1): 
-
+        masses_arr, springs_arr = self.get_dtype_arrays()
+        
         if Plot:
             start_time = time.time()
             pygame.init()
@@ -236,7 +387,9 @@ class Simulate:
                 #___________SIMULATION _________
                 # Loop over all masses and update them, advance simulation one step
                 #start_time = time.time()
-                self.Body_Advance_step()
+                #self.Body_Advance_step()
+                masses_arr, _ = self.Body_Advance_step_git(masses_arr, springs_arr)
+                self.update_mass_obj(masses_arr)
                 #print(f"Running {len(self.body.springs)/(time.time() - start_time):.6f} springs/sec")
 
                 # _________PLOTING_________
@@ -265,7 +418,8 @@ class Simulate:
             # Run simulation without plotting
             start_time = time.time()
             while True: 
-                self.Body_Advance_step()
+                #self.Body_Advance_step()
+                #masses_arr, springs_arr = self.Body_Advance_step_git(masses_arr, springs_arr)
                 
                 if Verbose and (self.global_step % self.sixty_Hz == 1):
                      self.print_update()
@@ -286,7 +440,7 @@ if __name__ == "__main__":
     genome = data[0][5].genome
     #genome = data[0][0].genome
     #NEW_BODY = RandomBody(only_bounce=True) #p_0=[0, 0, 0.7], prev_genome=np.array(genome), 
-    NEW_BODY = CubeLattice(lattice_size=2)
+    NEW_BODY = CubeLattice(lattice_size=2, p_0=np.array([0,0,.5]))
     sim1 = Simulate(body = NEW_BODY)
     
     
@@ -302,4 +456,4 @@ if __name__ == "__main__":
     print('done')
 
 # %%
-
+print(np.dot([0, 0, 1], 1))

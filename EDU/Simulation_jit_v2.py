@@ -1,6 +1,6 @@
 #%%
 from Libraries import *
-from Datastructures import RandomBody as custom
+from Datastructures import *
 from MAIN import *
 import pstats
 from my_dtypes import mass_dtype, spring_dtype
@@ -89,8 +89,14 @@ class Simulate:
         self.global_step = 0
         self.sixty_Hz = int(0.01666 / self.dt) # dynamic plotting for 60 FPS 
         self.four_Hz = int(.25 / self.dt)
+    #_______________________________________
     
-    #######################  PLOTTING METHODS ######################################
+    
+    ############################
+    ####  PLOTTING METHODS #####
+    ############################
+    
+    
     def draw_cube_faces(self):
         base_color = (0/255, 120/255, 200/255)  # Blue color
         border_color = (0, 0, 0)  # Black color for the border
@@ -219,9 +225,13 @@ class Simulate:
         text_string = f"Time: {self.T:.2f} seconds"
         self.render_text(0.6, 0.9, text_string)
         pygame.display.flip()
+    #______________________________________________________________________
     
-    ########################### RUN METHODS #######################################
-    # Array conversions: 
+    
+    ########################### 
+    ####### RUN METHODS #######
+    ###########################
+     
     def get_dtype_arrays(self):
         masses_arr = np.empty(len(self.body.masses), dtype=mass_dtype)
 
@@ -263,15 +273,7 @@ class Simulate:
 
     
     def Body_Advance_step_jit(self):
-        #Update masses
-               
-        #_----------- Run loop ------ 
-        
-        
-        #TODO condence the below after jit is running. unsure if we can pass atributes to functions. 
-        m_arr, s_arr,T = self.masses_arr.copy(),self.springs_arr.copy(),self.T
-        new_m_arr = mass_update_jit(m_arr,s_arr, T)
-        self.masses_arr = new_m_arr # with this, sim object always has masses_arr and can plot later
+        self.masses_arr = mass_update_jit(self.masses_arr.copy(),self.springs_arr, self.T)
         
         #update simulation
         self.T+=self.dt
@@ -351,39 +353,28 @@ class Simulate:
         #desired output       
         return self.evaluate()
             
+def start_profiler():
+    profiler = cProfile.Profile()
+    profiler.enable()
+    return profiler
 
+def end_profiler(profiler, Dump_stats = True, Verbose = True):
+    profiler.disable()
+    
+    stats = pstats.Stats(profiler).sort_stats('cumulative')
+    
+    if Verbose:     stats.print_stats()
+    if Dump_stats:  stats.dump_stats('profile_stats.prof')
+    
 
 
 if __name__ == "__main__":
-    with open('1700148827.3789582_random_search.pkl', 'rb') as file:
-        data = pickle.load(file)
-    #print(data[1])
-    genome = data[0][5].genome
-    #genome = data[0][0].genome
-    NEW_BODY = custom(only_bounce=True) #p_0=[0, 0, 0.7], prev_genome=np.array(genome), 
+    #NEW_BODY = CubeLattice(lattice_size=2, p_0=np.array([0,0,.5]))
+    NEW_BODY = RandomBody(only_bounce=True)
     sim1 = Simulate(body = NEW_BODY)
-    
-    
-    profiler = cProfile.Profile()
-    profiler.enable()
+     
+    profiler = start_profiler()
     fitness = sim1.run_simulation(Plot = True, Verbose = True, max_T = 1)
+    end_profiler(profiler)
     
-    
-    profiler.disable()
-    stats = pstats.Stats(profiler).sort_stats('cumulative')
-    stats.print_stats()
-    stats.dump_stats('profile_stats.prof')
-    
-    #cProfile.run('main(cubes)', 'profiling.out')
-    #print(fitness)
     print('done')
-
-# %%
-
-
-stats = pstats.Stats('profiling.out')
-
-stats.sort_stats('cumulative')
-
-# Print out the stats
-stats.print_stats()

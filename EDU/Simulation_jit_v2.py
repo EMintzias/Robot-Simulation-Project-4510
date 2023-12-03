@@ -1,7 +1,6 @@
 #%%
 from Libraries import *
 from Datastructures import *
-from MAIN import *
 import pstats
 from my_dtypes import mass_dtype, spring_dtype
 #%%
@@ -20,11 +19,13 @@ def mass_update_jit(old_masses_arr,springs_arr, T,
 
     #update simulation
     new_masses = old_masses_arr.copy()
+
     for mass_ind,mass in enumerate(new_masses): 
         
         # Initial force is 0
         # GRAVITATIONAL FORCE
         # Update F
+
         F = mass['m'] * G
         
         # SPRING FORCE
@@ -89,6 +90,8 @@ class Simulate:
         self.global_step = 0
         self.sixty_Hz = int(0.01666 / self.dt) # dynamic plotting for 60 FPS 
         self.four_Hz = int(.25 / self.dt)
+        self.masses_arr, self.springs_arr = self.get_dtype_arrays() #JIT Dtypes redundant rewriting for class clarity.
+        
     #_______________________________________
     
     
@@ -291,7 +294,6 @@ class Simulate:
         print(out)
     
     def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False, max_T = 1): 
-        self.get_dtype_arrays() #initialize dtypes 
         
         if Plot:
             start_time = time.time()

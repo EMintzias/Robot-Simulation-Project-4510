@@ -1,6 +1,6 @@
 # %%
-
-
+from Libraries import *
+import random
 #%%
 # Mass class
 class Mass:
@@ -293,18 +293,3 @@ if __name__ == "__main__":
    table = Custom_body_1()
    #print(table.reverse_tissue_dict)
    #print(table.springs[0].center)
-
-# %%
-#lattice = CubeLattice(lattice_size=2, k_value=9000, p_0 = [0,0,0])
-#print(lattice.genome)
-
-#genome = np.array([[[0.2, 0.4, 0.30000000000000004], [1000.0, 0.0, 0.0]], [[0.0, 0.2, 0.30000000000000004], [20000.0, 0.0, 0.0]], [[0.1, 0.30000000000000004, 0.4], [1000.0, 0.0, 0.0]], [[0.1, 0.0, 0.0], [20000.0, 0.0, 0.0]], [[0.4, 0.4, 0.2], [5000.0, -0.125, 0.0]], [[0.4, 0.5, 0.2], [20000.0, 0.0, 0.0]], [[0.4, 0.0, 0.0], [1000.0, 0.0, 0.0]], [[0.1, 0.2, 0.4], [5000.0, -0.125, 0.0]]])
-
-#body = Custom_body_1(prev_genome = genome)
-
-
-
-
-# %%
-#points = np.genfromtxt("table_body.txt", delimiter=',')
-

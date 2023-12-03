@@ -266,5 +266,4 @@ def main():
 # Plot the cube 1 unit above the 5x5 floor
 if __name__ == "__main__":
     main()
-    # test_force()
-    # Test()
+

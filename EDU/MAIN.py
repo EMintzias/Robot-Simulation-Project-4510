@@ -54,6 +54,7 @@ class Robot_Population:
         self.best_fitness = 1e-9
         self.generate_random_population()
         self.update_pop_fitness() 
+        
 
     
     
@@ -61,15 +62,19 @@ class Robot_Population:
     def generate_random_population(self):
         for i in tqdm(range(self.pop_size),desc='Generating Population'):
             deep_copy = self.original_body.Body_deep_copy()
-            self.population[i] = deep_copy.randomize_genome(Size = 8) #TODO parameters for the random body
-    
+            deep_copy.randomize_genome(Size = 8) 
+            self.population[i] = deep_copy 
+
+        pass
+        
     #TODO confirm this is only thing we need to check after a simulation
-    def reset_body_position(self,Body): 
+    def reset_body_position(self,Body: RandomBody): 
         Body.masses = self.original_body.masses
     
-    def evaluate_robot(self,Body): 
+    def evaluate_robot(self,Body: RandomBody): 
         fitness_raw  = Simulate(Body).run_simulation(max_T=self.sim_time)
-        self.reset_body_position(Body) #bring the body back to a starting position for a new simualtion
+        #TODO idunno was up with the reset after it is done. 
+        #self.reset_body_position(Body) #bring the body back to a starting position for a new simualtion
         return fitness_raw
         
     def update_pop_fitness(self, T = .05):
@@ -105,7 +110,7 @@ class Robot_Population:
         return P1_ind, P2_ind
     
     #CROSSOVER  
-    def crossover(self,P1,P2): 
+    def crossover(self,P1: RandomBody,P2: RandomBody): 
         C1 = P1.Body_deep_copy()
         C2 = P2.Body_deep_copy()
         C1.genome, C2.genome = two_point_crossover(C1.genome, C2.genome)
@@ -113,8 +118,11 @@ class Robot_Population:
         return C1,C2
     
     #MUTATION
-    def Mutate(self,C1,C2):
-        #TODO
+    def Mutate(self,C1: RandomBody,C2: RandomBody):
+        C1.Mutate_genome(mutation_size = .10,
+                         Tissue_mutation = True, Tissue_prob = .25)
+        C2.Mutate_genome(mutation_size = .10,
+                         Tissue_mutation = True, Tissue_prob = .25)
         pass
     
     #GA MAIN
@@ -126,6 +134,7 @@ class Robot_Population:
         
         #mutation
         self.Mutate(C1, C2)
+        
         
         #simulate the new children
         Simulate(body=C1).run_simulation(max_T=self.sim_time)
@@ -195,4 +204,11 @@ pop1 = Robot_Population(pop_size=2,
                             simulation_time= .05)
 #%%
 
-pop1.Run()
+pop1.Run(max_simulations=30)
+
+#%%
+print(pop1.original_body.masses[1])
+print(pop1.population[1].masses[1])
+pop1.reset_body_position(pop1.population[1])
+print(pop1.population[1].masses[1])
+    

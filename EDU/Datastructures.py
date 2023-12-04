@@ -13,7 +13,13 @@ class Mass:
 
     def add_spring(self, spring):
         self.springs.append(spring)
-
+        
+    def __str__(self):
+        out = f'Mass at Pos = {self.p}'
+        out += f'\nMass vel = {self.v}'
+        out += f'\nMass acc = {self.a}'
+        #print(out)
+        return out
 
 # Spring class
 class Spring:
@@ -297,25 +303,28 @@ class RandomBody:
     def Body_deep_copy(self):
         return copy.deepcopy(self)
     
-    def Mutate_genome(self, mutation_size = .10, Position = True, Tissue = False, tissue_prob = .75):
+    def Mutate_genome(self, mutation_size = .10, Position = True,
+                      Tissue_mutation = False, Tissue_prob = .25):
         #recall genmoe are a set of tissue type centroids in the form of [ [[pos] [tissue]] for each centroid  ]
         # the below randomizes each if told to. 
         if Position:
             #selects a random ind in the genome and changes that position by the size
             ind = np.random.choice(np.arange(len(self.genome)))
             self.genome[ind][0]  += np.random.choice([-1,1])* mutation_size * self.genome[ind][0]
+            
         
-        if Tissue and np.random.rand()>tissue_prob : 
+        if Tissue_mutation and np.random.rand() < Tissue_prob : 
             #will happen only ~25% even if told to by defautl
             ind = np.random.choice(np.arange(len(self.genome)))
             self.genome[ind][1] = self.tissue_dict[np.random.choice([1,2,3,4])]
-        pass
+            
+        return 
     
 def Main():
-    B = RandomBody()
-    print(B.genome[1][0]*.1)
-    #B.randomize_genome()
-    print('\n ------------\n', B.genome[:2])
+    B = RandomBody(Genome_size=3)
+    print(B.genome)
+    B.Mutate_genome()
+    print('\n ------------\n', B.genome)
 
 if __name__ == "__main__":
     Main()

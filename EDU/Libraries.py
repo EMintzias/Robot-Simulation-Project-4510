@@ -34,4 +34,5 @@ from matplotlib.patches import Rectangle
 import pstats
 from numba import jit
 import random
+import copy
 

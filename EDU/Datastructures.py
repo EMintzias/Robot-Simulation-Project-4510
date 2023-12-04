@@ -288,8 +288,13 @@ class RandomBody:
                 s.k,s.b,s.c = self.genome[min_ind,1]
             
             pass
+        
+    def Body_deep_copy(self):
+        return copy.deepcopy(self)
 
 if __name__ == "__main__":
-   table = Custom_body_1()
+   table = RandomBody()
+   t2 = table.Body_deep_copy()
+   
    #print(table.reverse_tissue_dict)
    #print(table.springs[0].center)

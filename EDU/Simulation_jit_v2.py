@@ -294,9 +294,8 @@ class Simulate:
         print(out)
     
     def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False, max_T = 1): 
-        
+        start_time = time.time()
         if Plot:
-            start_time = time.time()
             pygame.init()
             #glutInit()
             display = (800,600)
@@ -335,8 +334,6 @@ class Simulate:
                     
                 # ____ END CASE____ 
                 if self.T> max_T:
-                    print(self.T)
-                    print(f"Took {(time.time() - start_time):.6f} sec for {self.T} sec in sim")
                     break 
         
     
@@ -349,12 +346,19 @@ class Simulate:
                 if Verbose and (self.global_step % self.sixty_Hz == 1):
                      self.print_update()
                 
-                if self.T> max_T:
-                    print(f"Took {(time.time() - start_time):.6f} sec for {self.T} sec in sim")
+                if self.T> max_T:  
                     break
-        #desired output       
-        return self.evaluate()
-            
+        
+        
+        #END OF SIMULATION: desired output 
+        #print(f"Took {(time.time() - start_time):.6f} sec for {self.T} sec in sim")           
+        self.body.fitness = self.evaluate()
+        return self.body.fitness 
+
+
+
+
+
 def start_profiler():
     profiler = cProfile.Profile()
     profiler.enable()

@@ -175,3 +175,110 @@ print("Result:")
 print(result)
 
 # %%
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax1 = plt.subplots()
+T = .07
+y = np.random.uniform(0,.25,size = 50)
+y_srt = np.sort(y)[::-1]
+x = np.arange(len(y))
+ax1.plot(x,y_srt, 'g-')  # 'g-' is for green solid line
+ax1.set_xlabel('X data')
+ax1.set_ylabel('Y1 data', color='g')
+y_exp = np.exp(T * y_srt)-1
+
+ax2 = ax1.twinx()
+ax2.plot(x,y_exp, 'b-')  # 'b-' is for blue solid line
+ax2.set_ylabel('Y2 data', color='b')
+
+
+
+
+# %%
+from Libraries import *
+from Datastructures import*
+import copy
+body =  RandomBody()
+body2 =  body.Body_deep_copy()
+body2.genome[1] = None
+print(body.genome[:3], '\n ---------------')
+print(body2.genome[:3])
+# %%
+a = np.zeros(4)
+print (np.exp(.05*(a + 1))-1)
+
+
+# %%
+import timeit
+
+@jit(nopython=True) #non intensive but why not
+def two_point_crossover_JIT(arr1, arr2, print_test = False):
+    # Ensure arrays are of the same length
+    if len(arr1) != len(arr2):
+        raise ValueError("Arrays must be of the same length")
+
+    length = len(arr1)
+
+    # Ensure array length is more than 3 to have non-neighboring indices
+    if length < 4:
+        raise ValueError("Arrays must have more than 3 elements for non-neighboring crossover points")
+
+    # Select two random non-neighboring indices for crossover
+    index1 = random.randint(0, length - 3)
+    index2 = random.randint(index1 + 2, length - 1)
+    
+    # Create new child arrays
+    new_arr1 = np.concatenate((arr1[:index1], arr2[index1:index2], arr1[index2:]))
+    new_arr2 = np.concatenate((arr2[:index1], arr1[index1:index2], arr2[index2:]))
+
+    if print_test:
+        print("parent 1:", arr1)
+        print("parent 2:", arr2)
+        print('index1: ' , index1, '  index2: ',index2 )
+        print("Child 1:" , new_arr1)
+        print("Child 2:" , new_arr2)
+    
+    return new_arr1, new_arr2
+
+
+def two_point_crossover(arr1, arr2, print_test = False):
+    # Ensure arrays are of the same length
+    if len(arr1) != len(arr2):
+        raise ValueError("Arrays must be of the same length")
+
+    length = len(arr1)
+
+    # Ensure array length is more than 3 to have non-neighboring indices
+    if length < 4:
+        raise ValueError("Arrays must have more than 3 elements for non-neighboring crossover points")
+
+    # Select two random non-neighboring indices for crossover
+    index1 = random.randint(0, length - 3)
+    index2 = random.randint(index1 + 2, length - 1)
+    
+    # Create new child arrays
+    new_arr1 = np.concatenate((arr1[:index1], arr2[index1:index2], arr1[index2:]))
+    new_arr2 = np.concatenate((arr2[:index1], arr1[index1:index2], arr2[index2:]))
+
+    if print_test:
+        print("parent 1:", arr1)
+        print("parent 2:", arr2)
+        print('index1: ' , index1, '  index2: ',index2 )
+        print("Child 1:" , new_arr1)
+        print("Child 2:" , new_arr2)
+    
+    return new_arr1, new_arr2
+
+
+a1 = np.random.uniform(size = 1000)
+a2 = np.random.uniform(size = 1000)
+
+
+execution_time1 = timeit.timeit("two_point_crossover(a1,a2)", number=15, globals=globals())
+print(f"Execution time reg: {execution_time1} seconds")
+
+
+execution_time2 = timeit.timeit("two_point_crossover_JIT(a1,a2)", number=15, globals=globals())
+print(f"Execution time jit: {execution_time2} seconds")

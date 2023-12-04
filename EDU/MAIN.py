@@ -44,6 +44,7 @@ def two_point_crossover(arr1, arr2, print_test = False):
 class Robot_Population:
     def __init__(self, pop_size, simulation_time = 1.5):
         self.pop_size = pop_size
+        self.original_body = RandomBody()
         self.population = np.empty(pop_size, dtype=object)
         self.fitness_raw = np.zeros(pop_size, dtype=float)  # Raw fitnesses
         self.fitness_arr = np.zeros(pop_size, dtype=float)  # fitnesses with selection pressure
@@ -54,20 +55,33 @@ class Robot_Population:
         self.generate_random_population()
         self.update_pop_fitness() 
 
-    # Populate with random bodies
+    
+    
+    # Populate with random genomes for one body. 
     def generate_random_population(self):
         for i in tqdm(range(self.pop_size),desc='Generating Population'):
-            self.population[i] = RandomBody() #TODO parameters for the random body
+            deep_copy = self.original_body.Body_deep_copy()
+            self.population[i] = deep_copy.randomize_genome(Size = 8) #TODO parameters for the random body
     
-       
+    #TODO confirm this is only thing we need to check after a simulation
+    def reset_body_position(self,Body): 
+        Body.masses = self.original_body.masses
+    
+    def evaluate_robot(self,Body): 
+        fitness_raw  = Simulate(Body).run_simulation(max_T=self.sim_time)
+        self.reset_body_position(Body) #bring the body back to a starting position for a new simualtion
+        return fitness_raw
+        
     def update_pop_fitness(self, T = .05):
         for i in tqdm(range(self.pop_size), desc='Simulating Population'):
-            self.fitness_raw[i] = Simulate(body=self.population[i]).run_simulation(max_T=self.sim_time)
+            self.fitness_raw[i] = self.evaluate_robot(Body=self.population[i])
         self.fitness_arr = np.exp(T*(self.fitness_raw + 1e-9)) -1
         self.fitness_ind = np.argsort(self.fitness_arr)[::-1]
         self.best_fitness = self.fitness_arr[self.fitness_ind[0]]
         return 
 
+    
+    # SELECTION
     def fitness_prop_selection(self, N= 2):
         total_fitness    = np.sum(self.fitness_arr)
         self.fitness_ind = np.argsort(self.fitness_arr)[::-1]
@@ -90,7 +104,7 @@ class Robot_Population:
 
         return P1_ind, P2_ind
     
-        
+    #CROSSOVER  
     def crossover(self,P1,P2): 
         C1 = P1.Body_deep_copy()
         C2 = P2.Body_deep_copy()
@@ -98,10 +112,12 @@ class Robot_Population:
         
         return C1,C2
     
-    def Mutate(self):
+    #MUTATION
+    def Mutate(self,C1,C2):
         #TODO
         pass
-
+    
+    #GA MAIN
     def Crossover_Mutate_Replace(self, P1_ind, P2_ind):
         P1, P2 = self.population[P1_ind], self.population[P2_ind]
         
@@ -135,10 +151,11 @@ class Robot_Population:
 
         return None
   
-
+    #PRINT
     def results(self):
         return [self.population, self.fitness_raw]
     
+    # MAIN LOOP
     def Run(self,max_simulations = 15,Update_freq = 1e7):
         
         with tqdm(total=max_simulations, unit="evaluation") as pbar:
@@ -149,10 +166,6 @@ class Robot_Population:
                 P1_ind, P2_ind = self.fitness_prop_selection()
                 self.Crossover_Mutate_Replace(P1_ind, P2_ind)
                 # the above replaces in population and writes to the fitness array so we have to resor
-
-
-                # improvement bar (comment out & delete the tqdm block for speed / parallel if needed)
-                # TODO MSE array stuff
                 
                 pbar.update(self.evaluations - past_evals)
                 pbar.set_description(f'Best distance: {self.best_fitness:.6f}')
@@ -178,8 +191,8 @@ if __name__ == "__main__":
 
 #%%
 
-pop1 = Robot_Population(pop_size=4,
-                            simulation_time= .25)
+pop1 = Robot_Population(pop_size=2,
+                            simulation_time= .05)
 #%%
 
-print(pop1.best_fitness)
+pop1.Run()

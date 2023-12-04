@@ -282,3 +282,8 @@ print(f"Execution time reg: {execution_time1} seconds")
 
 execution_time2 = timeit.timeit("two_point_crossover_JIT(a1,a2)", number=15, globals=globals())
 print(f"Execution time jit: {execution_time2} seconds")
+
+#%%
+import  numpy as np
+a = np.random.choice(np.arange(8))
+print(a)

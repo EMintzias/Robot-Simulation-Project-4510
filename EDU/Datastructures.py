@@ -118,7 +118,7 @@ class CubeLattice:
         self.COM = rslt/total_mass
         return rslt/total_mass
 
-
+'''
 class Custom_body_1:
     def __init__(self, cube_size=0.1,  mass_value=0.1, k_value=9000, p_0=np.dot([0, 0, 0], 0.0), Genome_size = 8, prev_genome=None, only_bounce=False):
         self.fitness = 1e-7
@@ -195,7 +195,7 @@ class Custom_body_1:
                 s.k,s.b,s.c = self.genome[min_ind,1]
             
             pass
-
+'''
 
 class RandomBody:
     def __init__(self, cube_size=0.1,  mass_value=0.1, k_value=9000, p_0=np.array([0,0,0]), Genome_size = 8, prev_genome=None, only_bounce=False):
@@ -234,19 +234,24 @@ class RandomBody:
         self.springs = springs 
         
         
-        #Genome is a set of points with a corresponding tuple of properties (K,b,c)
-        genome_points = [m.p for m in np.random.choice(self.masses, size=Genome_size, replace=False)]
+
 
         if prev_genome is not None:
             self.genome = prev_genome
             for i in range(len(self.genome)):
                 self.genome[i][0] += p_0
         else:
-            self.genome = np.array([[pt , self.tissue_dict[np.random.choice([1,2,3,4])]] for pt in genome_points ])
+            self.randomize_genome(Size = Genome_size)   
         
         self.COM_update()
         self.Update_springs()
-        
+
+    
+    def randomize_genome(self,Size = 8):   
+        #Genome is a set of points with a corresponding tuple of properties (K,b,c)
+        genome_points = [m.p for m in np.random.choice(self.masses, size=Size, replace=False)]
+        self.genome = np.array([[pt , self.tissue_dict[np.random.choice([1,2,3,4])]] for pt in genome_points ])
+        pass
     
     def generate_points(self, num_points=120, x_range=[0,5], y_range=[0,5], z_range=[0,5]):
         points = set()
@@ -291,10 +296,31 @@ class RandomBody:
         
     def Body_deep_copy(self):
         return copy.deepcopy(self)
+    
+    def Mutate_genome(self, mutation_size = .10, Position = True, Tissue = False, tissue_prob = .75):
+        #recall genmoe are a set of tissue type centroids in the form of [ [[pos] [tissue]] for each centroid  ]
+        # the below randomizes each if told to. 
+        if Position:
+            #selects a random ind in the genome and changes that position by the size
+            ind = np.random.choice(np.arange(len(self.genome)))
+            self.genome[ind][0]  += np.random.choice([-1,1])* mutation_size * self.genome[ind][0]
+        
+        if Tissue and np.random.rand()>tissue_prob : 
+            #will happen only ~25% even if told to by defautl
+            ind = np.random.choice(np.arange(len(self.genome)))
+            self.genome[ind][1] = self.tissue_dict[np.random.choice([1,2,3,4])]
+        pass
+    
+def Main():
+    B = RandomBody()
+    print(B.genome[1][0]*.1)
+    #B.randomize_genome()
+    print('\n ------------\n', B.genome[:2])
 
 if __name__ == "__main__":
-   table = RandomBody()
-   t2 = table.Body_deep_copy()
+    Main()
+
+
    
    #print(table.reverse_tissue_dict)
    #print(table.springs[0].center)

@@ -217,7 +217,7 @@ class Robot_Population:
     
 
 def Main():
-    pop1 = Robot_Population(pop_size=6000,
+    pop1 = Robot_Population(pop_size=1000,
                             simulation_time= 1)
     #pop1.Run(max_simulations = 3)
     pass

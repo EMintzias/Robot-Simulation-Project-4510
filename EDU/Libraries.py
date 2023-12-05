@@ -6,6 +6,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import defaultdict
 import sys
+limit = 2000
+sys.setrecursionlimit(limit)
 import pdb
 import math as m
 import pandas as pd
@@ -22,6 +24,7 @@ import cProfile
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool, cpu_count
 # pyOpenGL
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 import pygame
 from pygame.locals import *
 from OpenGL.GL import *

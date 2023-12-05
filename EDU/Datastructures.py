@@ -23,15 +23,15 @@ class Mass:
 
 # Spring class
 class Spring:
-    def __init__(self, m1, m2, k, tissue_type = None):
+    def __init__(self, m1, m2, k, b=0, c=0, tissue_type = None):
         self.m1 = m1
         self.m2 = m2
         self.L0 = np.linalg.norm(m1.p - m2.p)
         self.center = (m1.p+m2.p) /2
         self.tissue_type = tissue_type
         self.k = k
-        self.b = 0
-        self.c = 0
+        self.b = b
+        self.c = c
         
     def update_center(self):
         self.center = (self.m1.p+self.m2.p)/2   
@@ -211,16 +211,16 @@ class RandomBody:
         # maps to properties (k,b,c)
         self.tissue_dict = {1:(1000,0,0), 2:(20000,0,0), 3:(5000,.125,0), 4:(5000,-.125,0)}
         self.reverse_tissue_dict = {value: key for key, value in self.tissue_dict.items()}
+        self.has_been_mutated = False
 
         points = self.generate_points()
         #np.genfromtxt("table_body.txt", delimiter=',')
-        
-        #self.masses = np.zeros((len(points),3))
+
         masses_dict = defaultdict(lambda: None)
         
         for i,point in enumerate(points):
             masses_dict[tuple(point)] = Mass(mass_value, point * cube_size, p_0=p_0)
-            
+        
         self.masses = list(masses_dict.values())
 
         springs =[]
@@ -237,11 +237,10 @@ class RandomBody:
                         springs.append(spring)
                         mass1.add_spring(spring)
                         mass2.add_spring(spring)
-        self.springs = springs 
-        
-        
+        self.springs = springs
 
-
+        self.og_masses = copy.deepcopy(self.masses)
+        
         if prev_genome is not None:
             self.genome = prev_genome
             for i in range(len(self.genome)):
@@ -252,7 +251,33 @@ class RandomBody:
         self.COM_update()
         self.Update_springs()
 
+        self.update_og_springs()
+        
     
+    def update_og_springs(self):
+        og_springs = []
+        for spring in self.springs:
+            og_s = Spring(self.og_masses[self.masses.index(spring.m1)], self.og_masses[self.masses.index(spring.m2)], 
+                          spring.k, b=spring.b, c=spring.c, tissue_type = spring.tissue_type)
+            og_springs.append(og_s)
+        self.og_springs = og_springs
+
+    # TODO what happens when we mutate morphology?
+    # TODO og_masses are not the same anymore, so keep track of deeper changes in og_masses, as well
+    # TODO springs may also change, so we should keep a copy?
+    def reset_body_position(self):
+        self.masses.clear()
+        self.masses.extend(self.og_masses)
+        self.og_masses = copy.deepcopy(self.masses)
+        self.springs.clear()
+        self.springs.extend(self.og_springs)
+        self.COM_update()
+        self.Update_springs()
+        self.update_og_springs()
+
+    def checker(self):
+        print(self.og_masses.index(self.og_springs[100].m1))
+
     def randomize_genome(self,Size = 8):   
         #Genome is a set of points with a corresponding tuple of properties (K,b,c)
         genome_points = [m.p for m in np.random.choice(self.masses, size=Size, replace=False)]
@@ -291,7 +316,8 @@ class RandomBody:
             s.update_center() #should not be necessary since this is called after initialized but more robust here
             dist = [np.linalg.norm(s.center - g_pt) for g_pt in self.genome[:,0]]
             min_ind = np.argmin(dist)
-            s.tissue_type = self.reverse_tissue_dict[tuple(self.genome[min_ind,1])]
+            if not self.has_been_mutated:
+                s.tissue_type = self.reverse_tissue_dict[tuple(self.genome[min_ind,1])]
             if self.only_bounce:
                 s.k,s.b,s.c = self.genome[min_ind,1][0], 0, self.genome[min_ind,1][1]
                 #s.b = 0
@@ -303,8 +329,8 @@ class RandomBody:
     def Body_deep_copy(self):
         return copy.deepcopy(self)
     
-    def Mutate_genome(self, mutation_size = .10, Position = True,
-                      Tissue_mutation = False, Tissue_prob = .25):
+    def Mutate_genome(self, mutation_size = .10, Position = False,
+                      Tissue_mutation = True, Tissue_prob = 0.25):
         #recall genmoe are a set of tissue type centroids in the form of [ [[pos] [tissue]] for each centroid  ]
         # the below randomizes each if told to. 
         if Position:
@@ -314,17 +340,34 @@ class RandomBody:
             
         
         if Tissue_mutation and np.random.rand() < Tissue_prob : 
-            #will happen only ~25% even if told to by defautl
+            #will happen only ~25% even if told to by default
             ind = np.random.choice(np.arange(len(self.genome)))
-            self.genome[ind][1] = self.tissue_dict[np.random.choice([1,2,3,4])]
+            # Mutate k
+            if np.random.rand() < 0.5:
+                self.genome[ind][1][0] += np.random.choice([1,-1])*mutation_size*self.genome[ind][1][0]
+            # Mutate b
+            if np.random.rand() < 0.5:
+                self.genome[ind][1][1] += np.random.choice([1,-1])*mutation_size*self.genome[ind][1][1]
+            # Mutate c
+            if np.random.rand() < 0.5:
+                self.genome[ind][1][2] += np.random.choice([1,-1])*mutation_size
+            
+            if self.has_been_mutated == False:
+                self.has_been_mutated = True
+            
+            self.Update_springs()
+
+            #self.genome[ind][1] = self.tissue_dict[np.random.choice([1,2,3,4])]
             
         return 
     
 def Main():
     B = RandomBody(Genome_size=3)
-    print(B.genome)
-    B.Mutate_genome()
-    print('\n ------------\n', B.genome)
+    #print(B.genome)
+    B.reset_body_position()
+    B.checker()
+    #B.Mutate_genome(Tissue_prob=1)
+    #print('\n ------------\n', B.genome)
 
 if __name__ == "__main__":
     Main()

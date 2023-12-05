@@ -100,27 +100,6 @@ class Simulate:
     ############################
     
     
-    def draw_cube_faces(self):
-        base_color = (0/255, 120/255, 200/255)  # Blue color
-        border_color = (0, 0, 0)  # Black color for the border
-        border_width = 1  # Width of the border
-        for i, face in enumerate(self.body.faces):
-            # Draw face
-            glBegin(GL_QUADS)
-            glColor3f(base_color[0], base_color[1], base_color[2])
-            for mass in face:
-                glVertex3fv(mass.p)
-            glEnd()
-
-            # Draw border
-            glLineWidth(border_width)
-            glColor3fv(border_color)
-            glBegin(GL_LINES)
-            for i in range(len(face)):
-                glVertex3fv(face[i].p)
-                glVertex3fv(face[(i + 1) % len(face)].p)  # Loop back to the start for the last line
-            glEnd()
-    
     def draw_masses_and_springs(self):
         mass_color = (0, 0, 0)
         spring_color = {1:(232/255, 177/255, 155/255), 2:(206/255, 222/255, 220/255), 3:(1, 0, 0), 4:(0, 0, 1)}  # Color springs for different types
@@ -204,30 +183,6 @@ class Simulate:
         # Then draw the cube's faces
         #draw_cube_faces(self.body)
         self.draw_masses_and_springs()
-        
-    def plot_frame(self): 
-        pygame.init()
-        #glutInit()
-        display = (800,600)
-        pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
-        gluPerspective(45, (display[0]/display[1]), 0.1, 100.0)
-        gluLookAt(-3.5, -3.5, 2.5, 0, 0, 0, 0, 0, 1)
-        glClearColor(0.53, 0.81, 0.98, 1)
-        glDisable(GL_CULL_FACE)
-        glEnable(GL_DEPTH_TEST)
-        for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-                        return   
-
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-        self.draw_ground()
-        self.draw_cube()
-        
-        # Render the text in the top-right corner using GLUT
-        text_string = f"Time: {self.T:.2f} seconds"
-        self.render_text(0.6, 0.9, text_string)
-        pygame.display.flip()
     #______________________________________________________________________
     
     
@@ -271,8 +226,6 @@ class Simulate:
             mass.p = masses_arr[i]['p']
             mass.v = masses_arr[i]['v']
             mass.a = masses_arr[i]['a']
-            
-        pass
 
     
     def Body_Advance_step_jit(self):
@@ -328,12 +281,13 @@ class Simulate:
                     self.draw_cube()
                     # Render the text in the top-right corner using GLUT
                     text_string = f"Time: {self.T:.2f} seconds"
-                    #self.render_text(0.6, 0.9, text_string)
+                    self.render_text(0.6, 0.9, text_string)
                     pygame.display.flip()
                     #pygame.time.wait(10)
                     
                 # ____ END CASE____ 
                 if self.T> max_T:
+                    self.update_mass_obj() #JIT: update mass obj to the array iterated
                     break 
         
     
@@ -344,9 +298,11 @@ class Simulate:
                 self.Body_Advance_step_jit()
                 
                 if Verbose and (self.global_step % self.sixty_Hz == 1):
+                     self.update_mass_obj() #JIT: update mass obj to the array iterated
                      self.print_update()
                 
-                if self.T> max_T:  
+                if self.T> max_T:
+                    self.update_mass_obj() #JIT: update mass obj to the array iterated
                     break
         
         
@@ -376,11 +332,16 @@ def end_profiler(profiler, Dump_stats = True, Verbose = True):
 
 if __name__ == "__main__":
     #NEW_BODY = CubeLattice(lattice_size=2, p_0=np.array([0,0,.5]))
-    NEW_BODY = RandomBody(only_bounce=True)
+    NEW_BODY = RandomBody(only_bounce=False)
+    #print(NEW_BODY.genome)
     sim1 = Simulate(body = NEW_BODY)
-     
-    profiler = start_profiler()
-    fitness = sim1.run_simulation(Plot = True, Verbose = True, max_T = 1)
-    end_profiler(profiler)
+    #profiler = start_profiler()
+    fitness = sim1.run_simulation(Plot = True, Verbose = True, max_T = .1)
+    #end_profiler(profiler)
+    print(NEW_BODY.masses)
+    #NEW_BODY.reset_body_position()
+    sim2 = Simulate(body = NEW_BODY)
+    fitness = sim2.run_simulation(Plot = True, Verbose = True, max_T = 1)
+
     
     print('done')

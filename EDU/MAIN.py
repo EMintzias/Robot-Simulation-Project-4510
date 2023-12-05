@@ -74,7 +74,7 @@ class Robot_Population:
     def evaluate_robot(self,Body: RandomBody): 
         fitness_raw  = Simulate(Body).run_simulation(max_T=self.sim_time)
         #TODO idunno was up with the reset after it is done. 
-        #self.reset_body_position(Body) #bring the body back to a starting position for a new simualtion
+        self.Body.reset_body_position() #bring the body back to a starting position for a new simualtion
         return fitness_raw
         
     def update_pop_fitness(self, T = .05):

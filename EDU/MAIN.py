@@ -76,7 +76,7 @@ class Robot_Population:
         fitness_raw  = Simulate(Body).run_simulation(max_T=self.sim_time)
         self.evaluations +=1
         #TODO idunno was up with the reset after it is done. 
-        self.Body.reset_body_position() #bring the body back to a starting position for a new simualtion
+        Body.reset_body_position() #bring the body back to a starting position for a new simualtion
         return fitness_raw
         
     def update_pop_fitness(self, T = .05):
@@ -170,6 +170,7 @@ class Robot_Population:
     
     # MAIN LOOP
     def Run(self, max_simulations = 15, Update_freq = 1e7):
+        print('starting with {}'.format(self.evaluations))
         
         with tqdm(total=max_simulations, unit="evaluation") as pbar:
             past_evals = 0
@@ -188,8 +189,8 @@ class Robot_Population:
     
 
 def Main():
-    pop1 = Robot_Population(pop_size=4,
-                            simulation_time= .25)
+    pop1 = Robot_Population(pop_size=10,
+                            simulation_time= 1)
     pop1.Run()
     pass
     '''
@@ -201,18 +202,4 @@ def Main():
 if __name__ == "__main__":
     Main()
 
-
-#%%
-
-pop1 = Robot_Population(pop_size=2,
-                            simulation_time= .05)
-#%%
-
-pop1.Run(max_simulations=30)
-
-#%%
-print(pop1.original_body.masses[1])
-print(pop1.population[1].masses[1])
-pop1.reset_body_position(pop1.population[1])
-print(pop1.population[1].masses[1])
     

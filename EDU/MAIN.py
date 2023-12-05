@@ -52,8 +52,9 @@ class Robot_Population:
         self.sim_time = simulation_time
         self.evaluations = 0
         self.best_fitness = 1e-9
+        self.selection_pressure = .05
         self.generate_random_population()
-        self.update_pop_fitness() 
+        self.update_pop_fitness(T = self.selection_pressure) 
         
 
     
@@ -149,13 +150,14 @@ class Robot_Population:
                               P2.fitness,
                               C1.fitness,
                               C2.fitness])
-        best = np.argsort(C_fitness)[::-1]
+        C_fitness_exp = np.exp(self.selection_pressure*(C_fitness + 1e-9))
+        best = np.argsort(C_fitness_exp)[::-1]
 
         # overwrite the two parent indecies with the best population and their fitnesses
         self.population[P1_ind] = candidates[best[0]]
-        self.fitness_arr[P1_ind] = C_fitness[best[0]]
+        self.fitness_arr[P1_ind] = C_fitness_exp[best[0]]
         self.population[P2_ind] = candidates[best[1]]
-        self.fitness_arr[P2_ind] = C_fitness[best[1]]
+        self.fitness_arr[P2_ind] = C_fitness_exp[best[1]]
 
         self.fitness_ind = np.argsort(self.fitness_arr)[::-1]
         self.best_fitness = self.fitness_arr[self.fitness_ind[0]]

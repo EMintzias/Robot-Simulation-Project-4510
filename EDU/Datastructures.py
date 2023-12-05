@@ -284,7 +284,7 @@ class RandomBody:
         self.genome = np.array([[pt , self.tissue_dict[np.random.choice([1,2,3,4])]] for pt in genome_points ])
         pass
     
-    def generate_points(self, num_points=120, x_range=[0,5], y_range=[0,5], z_range=[0,5]):
+    def generate_points(self, num_points=60, x_range=[0,5], y_range=[0,5], z_range=[0,5]):
         points = set()
         points.add((0, 0, 0))  # Start with the initial point
         while len(points) < num_points:

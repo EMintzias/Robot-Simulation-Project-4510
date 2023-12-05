@@ -14,7 +14,7 @@ def mass_update_jit(old_masses_arr,springs_arr, T,
                     Kc = 100000,        # Ground force constant
                     mu_s = 0.89,        # Static friction
                     mu_k = 0.70,        # Kinetic friction
-                    omega = 2*np.pi,                         
+                    omega = 3*2*np.pi,                         
                         ):
 
     #update simulation
@@ -242,8 +242,8 @@ class Simulate:
     
     def print_update(self):
         out = f'Time = {round(self.T,2)}  |  '
-        out+= f'Position  = {np.round(self.body.masses[72].p,2)}  |  '
-        out+= f'Vel  = {np.round(self.body.masses[72].v,2)}  |  '
+        out+= f'Position  = {np.round(self.body.masses[0].p,2)}  |  '
+        out+= f'Vel  = {np.round(self.body.masses[0].v,2)}  |  '
         print(out)
     
     def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False, max_T = 1): 
@@ -336,12 +336,9 @@ if __name__ == "__main__":
     #print(NEW_BODY.genome)
     sim1 = Simulate(body = NEW_BODY)
     #profiler = start_profiler()
-    fitness = sim1.run_simulation(Plot = True, Verbose = True, max_T = .1)
+    fitness = sim1.run_simulation(Plot = True, Verbose = True, max_T = 3)
     #end_profiler(profiler)
     print(NEW_BODY.masses)
-    #NEW_BODY.reset_body_position()
-    sim2 = Simulate(body = NEW_BODY)
-    fitness = sim2.run_simulation(Plot = True, Verbose = True, max_T = 1)
 
     
     print('done')

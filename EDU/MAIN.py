@@ -73,6 +73,7 @@ class Robot_Population:
     
     def evaluate_robot(self,Body: RandomBody): 
         fitness_raw  = Simulate(Body).run_simulation(max_T=self.sim_time)
+        self.evaluations +=1
         #TODO idunno was up with the reset after it is done. 
         self.Body.reset_body_position() #bring the body back to a starting position for a new simualtion
         return fitness_raw
@@ -137,9 +138,10 @@ class Robot_Population:
         
         
         #simulate the new children
-        Simulate(body=C1).run_simulation(max_T=self.sim_time)
-        Simulate(body=C2).run_simulation(max_T=self.sim_time)
-        self.evaluations +=2
+        c1_fit = self.evaluate_robot(Body=C1)
+        c2_fit = self.evaluate_robot(Body=C2)
+        #Simulate(body=C1).run_simulation(max_T=self.sim_time)
+        #Simulate(body=C2).run_simulation(max_T=self.sim_time)
         # NAIVE REPLACEMENT: Select the best two between parent and new children
         # TODO Implement discrete diversity maintenance here
         candidates = np.array([P1, P2, C1, C2])
@@ -165,7 +167,7 @@ class Robot_Population:
         return [self.population, self.fitness_raw]
     
     # MAIN LOOP
-    def Run(self,max_simulations = 15,Update_freq = 1e7):
+    def Run(self, max_simulations = 15, Update_freq = 1e7):
         
         with tqdm(total=max_simulations, unit="evaluation") as pbar:
             past_evals = 0

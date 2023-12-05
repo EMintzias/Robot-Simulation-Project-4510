@@ -21,7 +21,7 @@ import random
 from numba import jit, prange, float64
 # Parallelization & debugging runtime
 import cProfile
-from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 from multiprocessing import Pool, cpu_count
 import pstats
 import random

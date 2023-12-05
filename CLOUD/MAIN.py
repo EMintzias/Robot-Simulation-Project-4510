@@ -87,17 +87,37 @@ class Robot_Population:
         #TODO idunno was up with the reset after it is done. 
         Body.reset_body_position() #bring the body back to a starting position for a new simualtion
         return fitness_raw
-        
+    
+    '''
     def update_pop_fitness(self, T = .05):
+        
         for i in tqdm(range(self.pop_size), desc='Simulating Population'):
-            if i%10==0:
+            if i%10==0 or i>last_i:
                 self.save_population_state()
+                last_i = i
             self.fitness_raw[i] = self.evaluate_robot(Body=self.population[i])
             self.fitness_arr[i] = np.exp(T*(self.fitness_raw[i] + 1e-9)) -1
         self.fitness_ind = np.argsort(self.fitness_arr)[::-1]
         self.best_fitness = self.fitness_arr[self.fitness_ind[0]]
         return 
+    '''  
+        
+    def update_pop_fitness(self, T = .05):
+        with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+            # Create a list of futures
+            futures = [executor.submit(self.evaluate_robot, Body=body) for body in self.population]
 
+            for i, future in tqdm(enumerate(concurrent.futures.as_completed(futures)), total=self.pop_size, desc='Simulating Population'):
+                self.evaluations = i
+                self.fitness_raw[i] = future.result()
+                self.fitness_arr[i] = np.exp(T*(self.fitness_raw[i] + 1e-9)) -1
+                if self.evaluations%100 == 0:
+                    self.save_population_state()
+        self.evaluations += 1
+        self.fitness_ind = np.argsort(self.fitness_arr)[::-1]
+        self.best_fitness = self.fitness_arr[self.fitness_ind[0]]
+        self.save_population_state()
+    
     
     # SELECTION
     def fitness_prop_selection(self, N= 2):
@@ -200,7 +220,7 @@ class Robot_Population:
     
 
 def Main():
-    pop1 = Robot_Population(pop_size=2000,
+    pop1 = Robot_Population(pop_size=3000,
                             simulation_time= 1)
     #pop1.Run(max_simulations = 3)
     pass

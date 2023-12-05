@@ -103,7 +103,7 @@ class Robot_Population:
     '''  
         
     def update_pop_fitness(self, T = .05):
-        with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
             # Create a list of futures
             futures = [executor.submit(self.evaluate_robot, Body=body) for body in self.population]
 

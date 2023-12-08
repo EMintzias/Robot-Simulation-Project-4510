@@ -180,14 +180,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 fig, ax1 = plt.subplots()
-T = .07
-y = np.random.uniform(0,.25,size = 50)
+T = .25
+y = np.random.uniform(0,5,size = 50)
 y_srt = np.sort(y)[::-1]
 x = np.arange(len(y))
 ax1.plot(x,y_srt, 'g-')  # 'g-' is for green solid line
 ax1.set_xlabel('X data')
 ax1.set_ylabel('Y1 data', color='g')
-y_exp = np.exp(T * y_srt)-1
+y_exp = np.exp(T * y_srt)
 
 ax2 = ax1.twinx()
 ax2.plot(x,y_exp, 'b-')  # 'b-' is for blue solid line

@@ -137,7 +137,6 @@ class Robot_Population:
         #mutation
         self.Mutate(C1, C2)
         
-        
         #simulate the new children
         c1_fit = self.evaluate_robot(Body=C1)
         c2_fit = self.evaluate_robot(Body=C2)

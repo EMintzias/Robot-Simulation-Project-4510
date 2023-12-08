@@ -2,6 +2,7 @@
 from Libraries import *
 from Datastructures import Mass,Spring,RandomBody
 from my_dtypes import mass_dtype, spring_dtype
+
 #%%
 
 #GLOBAL MASS UPDATE FUNCTION
@@ -77,6 +78,7 @@ class Simulate:
     def __init__(self, body):
         self.body = body
         self.Initial_pos = body.COM
+        self.body_arr = np.empty(8, dtype=object)
         #GVLs
         self.b  = 0.999 # Dampening constant
         self.Kc = 100000  # Ground force constant
@@ -90,6 +92,7 @@ class Simulate:
         self.sixty_Hz = int(0.01666 / self.dt) # dynamic plotting for 60 FPS 
         self.four_Hz = int(.25 / self.dt)
         self.masses_arr, self.springs_arr = self.get_dtype_arrays() #JIT Dtypes redundant rewriting for class clarity.
+        self.generate_robot_array()
         
     #_______________________________________
     
@@ -97,9 +100,67 @@ class Simulate:
     ############################
     ####  PLOTTING METHODS #####
     ############################
+    def plot_picture(self):
+        pygame.init()
+        #glutInit()
+        display = (1000,800)
+        screen = pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
+        gluPerspective(45, (display[0]/display[1]), 0.1, 160.0)
+        gluLookAt(-2., -2., 1.5, 0, 0, 0, 0, 0, 1)
+        glClearColor(0.53, 0.81, 0.98, 1)
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        self.draw_ground()
+        self.draw_cube()
+        # Render the text in the top-right corner using GLUT
+        text_string = f"Time: {self.T:.2f} seconds"
+        #self.render_text(0.6, 0.9, text_string)
+        pygame.display.flip()
+        pygame.image.save(screen, 'body2.png')
+
+        pass
     
+    def generate_robot_array(self):
+        r_arr = np.empty(8, dtype=object)
+        a = 1.2
+        r_arr[0] = RandomBody(p_0=np.array([0,0,0]))
+        r_arr[1] = RandomBody(p_0=np.array([a,0,0]))
+        r_arr[2] = RandomBody(p_0=np.array([-a,0,0]))
+        r_arr[3] = RandomBody(p_0=np.array([0,a,0]))
+        r_arr[4] = RandomBody(p_0=np.array([0,-a,0]))
+        r_arr[5] = RandomBody(p_0=np.array([-a,a,0])/1.4)
+        r_arr[6] = RandomBody(p_0=np.array([a,a,0]))
+        r_arr[7] = RandomBody(p_0=np.array([a,-a,0])/1.4)
+
+        self.body_arr = r_arr
+
+        pass
+        
+    def draw_several_bodies(self): 
+        pygame.init()
+        #glutInit()
+        display = (1000,800)
+        screen = pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
+        gluPerspective(45, (display[0]/display[1]), 0.1, 100.0)
+        gluLookAt(-2., -2., 1.5, 0, 0, 0, 0, 0, 1)
+        glClearColor(0.53, 0.81, 0.98, 1)
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+        self.draw_ground()
+        for body in self.body_arr:
+            self.draw_cube(body)
+        # Render the text in the top-right corner using GLUT
+        text_string = f"Time: {self.T:.2f} seconds"
+        #self.render_text(0.6, 0.9, text_string)
+        pygame.display.flip()
+        pygame.image.save(screen, 'body2.png')
+        pass
+        
+        
     
-    def draw_masses_and_springs(self):
+    def draw_masses_and_springs(self,body):
         mass_color = (0, 0, 0)
         spring_color = {1:(232/255, 177/255, 155/255), 2:(206/255, 222/255, 220/255), 3:(1, 0, 0), 4:(0, 0, 1)}  # Color springs for different types
         mass_size = 5  # Size of the mass points
@@ -108,19 +169,19 @@ class Simulate:
         glPointSize(mass_size)
         glColor3fv(mass_color)
         glBegin(GL_POINTS)
-        for mass in self.body.masses:
+        for mass in body.masses:
             glVertex3fv(mass.p)
         glEnd()
         # Draw springs
         glLineWidth(spring_width)
         glBegin(GL_LINES)
-        for spring in self.body.springs:
+        for spring in body.springs:
             glColor3fv(spring_color[spring.tissue_type])
             glVertex3fv(spring.m1.p)
             glVertex3fv(spring.m2.p)
         glEnd()
     
-    def draw_shadow(self):
+    def draw_shadow(self,body):
         shadow_color = (0.2, 0.2, 0.2)  # Dark gray color for shadow
         spring_shadow_width = 1  # Width of the spring shadows
         # Set the color and line width for the shadows
@@ -128,7 +189,7 @@ class Simulate:
         glLineWidth(spring_shadow_width)
         # Draw shadows of the springs
         glBegin(GL_LINES)
-        for spring in self.body.springs:
+        for spring in body.springs:
             # Project the mass positions onto the ground plane (z = 0)
             glVertex3f(spring.m1.p[0], spring.m1.p[1], -0.001)
             glVertex3f(spring.m2.p[0], spring.m2.p[1], -0.001)
@@ -176,12 +237,12 @@ class Simulate:
         glPopMatrix()
         glMatrixMode(GL_MODELVIEW)
         
-    def draw_cube(self):
+    def draw_cube(self, body):
         # Draw shadow first
-        self.draw_shadow()
+        self.draw_shadow(body)
         # Then draw the cube's faces
         #draw_cube_faces(self.body)
-        self.draw_masses_and_springs()
+        self.draw_masses_and_springs(body)
     #______________________________________________________________________
     
     
@@ -245,6 +306,8 @@ class Simulate:
         out+= f'Vel  = {np.round(self.body.masses[0].v,2)}  |  '
         print(out)
     
+
+    
     def run_simulation(self, Plot = False, Actuator_on = False, Verbose = False, max_T = 1): 
         start_time = time.time()
         if Plot:
@@ -280,7 +343,7 @@ class Simulate:
                     self.draw_cube()
                     # Render the text in the top-right corner using GLUT
                     text_string = f"Time: {self.T:.2f} seconds"
-                    self.render_text(0.6, 0.9, text_string)
+                    #self.render_text(0.6, 0.9, text_string)
                     pygame.display.flip()
                     #pygame.time.wait(10)
                     
@@ -335,9 +398,11 @@ if __name__ == "__main__":
     #print(NEW_BODY.genome)
     sim1 = Simulate(body = NEW_BODY)
     #profiler = start_profiler()
-    fitness = sim1.run_simulation(Plot = True, Verbose = True, max_T = 3)
-    #end_profiler(profiler)
-    print(NEW_BODY.masses)
 
-    
+    #fitness = sim1.run_simulation(Plot = True, Verbose = True, max_T = .1)
+    #end_profiler(profiler)
+    sim1.draw_several_bodies()
+
+    a = input('enter anything to quit pygame')
+    pygame.quit()
     print('done')
